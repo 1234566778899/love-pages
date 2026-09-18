@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Header } from '@/components/layout/header';
 import { Clock, ArrowRight } from 'lucide-react';
 import { blogPosts } from '@/lib/blog';
+import { AppPromoAd } from '@/components/ads/AppPromoAd';
 
 export const metadata: Metadata = {
     title: 'Blog — Love Pages | Consejos de Amor y Relaciones',
@@ -139,6 +140,8 @@ export default function BlogPage() {
                         </button>
                     </Link>
                 </section>
+
+                <AppPromoAd variant="banner" placement="blog" style={{ marginTop: 32 }} />
 
                 {/* Footer links */}
                 <div style={{ marginTop: 40, paddingTop: 24, borderTop: '1px solid var(--rule)', display: 'flex', flexWrap: 'wrap', gap: 0 }}>

@@ -386,3 +386,94 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--lila-2); border-radius: 999px; border: 3px solid var(--paper); }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-3-hex); }
+
+/* ── Anuncios propios estilo Google (AppPromoAd) ── */
+.gad {
+  --gad-bg: #ffffff;
+  --gad-border: #dadce0;
+  --gad-title: #202124;
+  --gad-text: #4d5156;
+  --gad-muted: #70757a;
+  --gad-btn: #1a73e8;
+  --gad-btn-hover: #1765cc;
+  --gad-btn-text: #ffffff;
+  --gad-chip: rgba(255, 255, 255, 0.92);
+  position: relative;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--gad-bg);
+  border: 1px solid var(--gad-border);
+  border-radius: 8px;
+  color: var(--gad-text);
+  font-family: Roboto, 'Google Sans', Arial, Helvetica, sans-serif;
+  text-align: left;
+  text-decoration: none;
+  overflow: hidden;
+  transition: box-shadow 150ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.gad:hover { box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15); }
+.dark .gad {
+  --gad-bg: #202124;
+  --gad-border: #3c4043;
+  --gad-title: #e8eaed;
+  --gad-text: #bdc1c6;
+  --gad-muted: #9aa0a6;
+  --gad-btn: #8ab4f8;
+  --gad-btn-hover: #aecbfa;
+  --gad-btn-text: #202124;
+  --gad-chip: rgba(32, 33, 36, 0.92);
+}
+
+.gad__chrome { position: absolute; top: 0; right: 0; display: flex; z-index: 2; }
+.gad__chip {
+  width: 18px; height: 16px; padding: 0; border: none; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--gad-chip); color: #00aecd;
+}
+.gad__chip:last-child { color: var(--gad-muted); border-bottom-left-radius: 0; }
+.gad__chip:first-child { border-bottom-left-radius: 4px; }
+.gad__why {
+  position: absolute; top: 18px; right: 6px; z-index: 3; max-width: 220px;
+  padding: 6px 10px; border-radius: 4px; font-size: 12px; line-height: 1.4;
+  background: #3c4043; color: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.gad__main { display: flex; align-items: center; gap: 14px; padding: 14px 16px; }
+.gad__icon { flex-shrink: 0; width: 56px; height: 56px; border-radius: 22%; object-fit: cover; border: 1px solid rgba(0, 0, 0, 0.06); }
+.gad__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.gad__meta { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--gad-muted); line-height: 1.4; }
+.gad__label { font-weight: 700; color: var(--gad-title); }
+.gad__title { font-size: 16px; font-weight: 500; color: var(--gad-title); line-height: 1.3; }
+.gad__sub { font-size: 13px; color: var(--gad-muted); line-height: 1.4; }
+.gad__body { font-size: 14px; color: var(--gad-text); line-height: 1.45; margin-top: 2px; }
+.gad__cta {
+  flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 22px; height: 36px; border-radius: 18px;
+  background: var(--gad-btn); color: var(--gad-btn-text);
+  font-size: 14px; font-weight: 500; letter-spacing: 0.01em;
+  transition: background 150ms ease;
+}
+.gad:hover .gad__cta { background: var(--gad-btn-hover); }
+
+/* banner: en móvil el botón baja a su propia fila */
+@media (max-width: 560px) {
+  .gad--banner .gad__main { flex-wrap: wrap; }
+  .gad--banner .gad__cta { width: 100%; }
+}
+
+/* compact: tira pequeña (página pública) */
+.gad--compact .gad__main { padding: 10px 12px; gap: 12px; }
+.gad--compact .gad__icon { width: 44px; height: 44px; }
+.gad--compact .gad__title { font-size: 14px; }
+.gad--compact .gad__sub { font-size: 12px; }
+.gad--compact .gad__cta { padding: 0 16px; height: 32px; font-size: 13px; }
+
+/* card: tarjeta vertical que ocupa una celda del grid */
+.gad--card { height: 100%; display: flex; flex-direction: column; }
+.gad--card .gad__main { flex: 1; flex-direction: column; align-items: stretch; padding: 22px 20px 20px; gap: 16px; }
+.gad--card .gad__icon { width: 72px; height: 72px; }
+.gad--card .gad__title { font-size: 18px; }
+.gad--card .gad__body { flex: 1; }
+.gad--card .gad__cta { width: 100%; height: 40px; margin-top: auto; }

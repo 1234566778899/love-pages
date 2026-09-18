@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Header } from '@/components/layout/header';
 import { Clock, ArrowLeft, ArrowRight, BookOpen } from 'lucide-react';
 import { getBlogPost, getAllSlugs, blogPosts } from '@/lib/blog';
+import { AppPromoAd } from '@/components/ads/AppPromoAd';
 
 interface Props {
     params: { slug: string };
@@ -185,6 +186,8 @@ export default function BlogPostPage({ params }: Props) {
                         </Link>
                     )}
                 </div>
+
+                <AppPromoAd variant="banner" placement="blog-post" style={{ marginBottom: 40 }} />
 
                 {/* Related articles */}
                 {relatedPosts.length > 0 && (

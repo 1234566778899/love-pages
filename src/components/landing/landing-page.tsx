@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store';
 import Link from 'next/link';
 import { useTranslation } from '@/i18n';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { AppPromoAd } from '@/components/ads/AppPromoAd';
 import { ArrowUpRight, ArrowDown, Check, Heart, Star, Play, LayoutTemplate } from 'lucide-react';
 
 /**
@@ -719,6 +720,11 @@ export default function LandingPage() {
                     <Stat n="89%" label={t.landing.statsSiLabel} />
                     <Stat n="$9" label={t.landing.statsProLabel} />
                 </div>
+            </section>
+
+            {/* ── Anuncio ── */}
+            <section className="px-6 sm:px-10" style={{ marginTop: 32 }}>
+                <AppPromoAd variant="banner" placement="landing" style={{ maxWidth: 760, margin: '0 auto' }} />
             </section>
 
             {/* ── Testimonio ── */}

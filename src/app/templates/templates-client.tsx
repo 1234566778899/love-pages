@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store';
 import { Header } from '@/components/layout/header';
@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { Crown, Eye, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useTranslation } from '@/i18n';
+import { AppPromoAd } from '@/components/ads/AppPromoAd';
 
 interface Template {
     _id: string;
@@ -139,10 +140,12 @@ export default function TemplatesPage() {
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }} className="max-sm:grid-cols-1">
-                        {filtered.map((template) => {
+                        {filtered.map((template, i) => {
                             const catTone = CAT_TONES[template.category] || 'var(--lila)';
                             return (
-                                <div key={template._id}
+                                <Fragment key={template._id}>
+                                {i === Math.min(2, filtered.length - 1) && <AppPromoAd variant="card" placement="templates" />}
+                                <div
                                     onClick={() => router.push(`/templates/${template._id}`)}
                                     style={{ border: '1px solid var(--hairline)', borderRadius: 10, background: 'white', overflow: 'hidden', boxShadow: 'var(--shadow-card)', cursor: 'pointer', transition: 'transform 120ms' }}
                                     className="hover:-translate-y-0.5 transition-transform">
@@ -190,6 +193,7 @@ export default function TemplatesPage() {
                                         </div>
                                     </div>
                                 </div>
+                                </Fragment>
                             );
                         })}
                     </div>
