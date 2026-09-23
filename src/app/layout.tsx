@@ -3,6 +3,7 @@ import { Poppins, Inter, Dancing_Script } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/components/providers/auth-provider';
 import { LanguageProvider } from '@/i18n';
+import { MyDiessAd } from '@/components/ads/MyDiessAd';
 import './globals.css';
 import Script from 'next/script';
 
@@ -126,6 +127,7 @@ export default function RootLayout({
         <LanguageProvider>
           <AuthProvider>
             {children}
+            <MyDiessAd />
             <Toaster
               position="top-center"
               toastOptions={{

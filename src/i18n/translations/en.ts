@@ -1049,6 +1049,18 @@ const en: Translations = {
   },
 
   // ============================================================
+  // MYDIESS AD
+  // ============================================================
+  mydiessAd: {
+    adLabel: 'Ad',
+    info: 'Ad for an app by the creator of Love Pages',
+    close: 'Close ad',
+    description: 'The app for couples: keep your photos, notes, places and special dates together.',
+    meta: 'Free · App Store',
+    cta: 'Install',
+  },
+
+  // ============================================================
   // LANGUAGE
   // ============================================================
   language: {

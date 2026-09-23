@@ -1047,6 +1047,18 @@
   },
 
   // ============================================================
+  // MYDIESS AD
+  // ============================================================
+  mydiessAd: {
+    adLabel: 'Anuncio',
+    info: 'Anuncio de una app del creador de Love Pages',
+    close: 'Cerrar anuncio',
+    description: 'La app para parejas: guarden fotos, notas, lugares y sus fechas especiales juntos.',
+    meta: 'Gratis · App Store',
+    cta: 'Instalar',
+  },
+
+  // ============================================================
   // LANGUAGE
   // ============================================================
   language: {
