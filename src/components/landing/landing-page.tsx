@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuthStore } from '@/store';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslation } from '@/i18n';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { AppPromoAd } from '@/components/ads/AppPromoAd';
@@ -507,19 +508,8 @@ export default function LandingPage() {
                 }}
             >
                 <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '14px 0' }} className="px-6 sm:px-10">
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                        <span
-                            aria-hidden="true"
-                            style={{
-                                width: 32, height: 32, borderRadius: 11, background: 'var(--accent-soft)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', color: ACCENT,
-                            }}
-                        >
-                            <Heart size={17} fill={ACCENT} stroke="none" />
-                        </span>
-                        <span style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 20, letterSpacing: '-0.02em', color: INK }}>
-                            love pages
-                        </span>
+                    <span style={{ display: 'flex', alignItems: 'center', flexShrink: 0, lineHeight: 0 }}>
+                        <Image src="/logo.png" alt="love pages" width={153} height={32} priority style={{ height: 32, width: 'auto' }} />
                     </span>
 
                     <nav className="hidden md:flex" style={{ gap: 30 }}>
@@ -866,19 +856,8 @@ export default function LandingPage() {
                 style={{ borderTop: '1px solid var(--hairline)' }}
                 className="px-6 sm:px-10 py-10 flex flex-wrap justify-between items-center gap-6 max-sm:flex-col max-sm:text-center"
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span
-                        aria-hidden="true"
-                        style={{
-                            width: 28, height: 28, borderRadius: 10, background: 'var(--accent-soft)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}
-                    >
-                        <Heart size={15} fill={ACCENT} stroke="none" />
-                    </span>
-                    <span style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 17, letterSpacing: '-0.02em', color: INK }}>
-                        love pages
-                    </span>
+                <div style={{ display: 'flex', alignItems: 'center', lineHeight: 0 }}>
+                    <Image src="/logo.png" alt="love pages" width={134} height={28} style={{ height: 28, width: 'auto' }} />
                 </div>
 
                 <nav style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px 26px' }}>

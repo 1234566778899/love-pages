@@ -27,8 +27,8 @@ export interface PagePalette {
 export const DEFAULT_THEME_ID = 'riso';
 export const DEFAULT_FONT = 'Love Pages';
 
-/** Los primarios de la app: papel lila casi blanco, tinta pizarra, acento morado. */
-export const DEFAULT_COLORS = { bg: '#f9f8fc', text: '#494a5f', accent: '#a772e3' };
+/** Los primarios de la app: papel cálido casi blanco, tinta pizarra, acento vino. */
+export const DEFAULT_COLORS = { bg: '#faf8f8', text: '#494a5f', accent: '#7b2240' };
 
 /**
  * ¿Es la tipografía del producto, y no una Google Font?

@@ -4,7 +4,7 @@ import { useState, useRef } from 'react';
 import { useAuthStore } from '@/store';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { Menu, X, LogOut, Crown, Heart, LayoutGrid } from 'lucide-react';
+import { Menu, X, LogOut, Crown, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
@@ -72,19 +72,10 @@ export function Header() {
             }}
             className="px-5 py-3 sm:px-10 sm:py-4"
         >
-            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-                <span
-                    aria-hidden="true"
-                    style={{
-                        width: 32, height: 32, borderRadius: 11, background: 'var(--accent-soft)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                    }}
-                >
-                    <Heart size={17} fill="var(--accent-hex)" stroke="none" />
-                </span>
-                <span style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 20, letterSpacing: '-0.02em', color: 'var(--ink-black)' }}>
-                    love pages
-                </span>
+            <Link href="/" aria-label="love pages" style={{ display: 'flex', alignItems: 'center', flexShrink: 0, lineHeight: 0 }}>
+                {/* Logo generado con ChatGPT, recortado y teñido al vino exacto
+                    de la marca (public/logo.png, 688×144). */}
+                <Image src="/logo.png" alt="love pages" width={153} height={32} priority style={{ height: 32, width: 'auto' }} />
             </Link>
 
             {/* Nav de escritorio */}

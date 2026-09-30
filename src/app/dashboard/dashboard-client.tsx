@@ -34,7 +34,7 @@ function Sparkline({ points }: { points: number[] }) {
         <div>
             <div className="mono-eyebrow" style={{ fontSize: 14, marginBottom: 6 }}>{t.dashboard.responses14d}</div>
             <svg viewBox={`0 0 ${w} ${h}`} style={{ display: 'block', width: '100%', height: h }}>
-                <path d={`${path} L ${w} ${h} L 0 ${h} Z`} fill="rgba(167,114,227,0.12)" />
+                <path d={`${path} L ${w} ${h} L 0 ${h} Z`} fill="rgba(123,34,64,0.12)" />
                 <path d={path} stroke="var(--accent-hex)" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx={w} cy={h - (last / max) * h} r="4.5" fill="var(--accent-hex)" stroke="var(--paper-soft)" strokeWidth="2" />
             </svg>

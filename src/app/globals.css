@@ -3,16 +3,16 @@
 @tailwind utilities;
 
 /* ── Design tokens — soft, airy, friendly ──
-   Ligero por defecto: fondos casi blancos con un toque lila, tipografía
+   Ligero por defecto: fondos casi blancos con un toque cálido, tipografía
    grande y respirada, esquinas redondas y cero bordes duros. */
 :root {
   /* Superficies — de más al fondo a más al frente */
-  --paper: #f9f8fc;        /* fondo de la app */
-  --paper-2: #f3f1f9;      /* superficie sutil (chips, rows) */
-  --paper-3: #ebe7f5;      /* superficie hundida / hover */
+  --paper: #faf8f8;        /* fondo de la app */
+  --paper-2: #f4f0f1;      /* superficie sutil (chips, rows) */
+  --paper-3: #ece5e7;      /* superficie hundida / hover */
   --paper-soft: #ffffff;   /* tarjetas */
   --surface-blur: rgba(255, 255, 255, 0.88); /* barras fijas con desenfoque */
-  --surface-tint: #f1edf7; /* lila muy suave, para pills y iconos */
+  --surface-tint: #f6ecef; /* vino muy suave, para pills y iconos */
 
   /* Tinta — jerarquía de texto en 3 niveles */
   --ink-black: #494a5f;    /* títulos */
@@ -21,13 +21,13 @@
   --ink-soft: #71677e;     /* texto secundario */
   --ink-faint: #9b93a6;    /* placeholders, metadatos */
 
-  /* Acento — morado suave */
-  --accent-hex: #a772e3;
-  --accent-strong: #9256d8;
-  --accent-soft: #f1edf7;
-  --accent-2-hex: #7c5cbf;
-  --accent-3-hex: #c9a6f0;
-  --accent-deep-hex: #7c5cbf;
+  /* Acento — vino */
+  --accent-hex: #7b2240;
+  --accent-strong: #651a34;
+  --accent-soft: #f6e8ec;
+  --accent-2-hex: #6a1c37;
+  --accent-3-hex: #d9a3b3;
+  --accent-deep-hex: #521329;
   --on-accent-default: #ffffff;
 
   /* Error — suave, no alarmante */
@@ -39,20 +39,20 @@
   --mint: #cfe8b8;
   --butter: #ffe9b0;
   --melocoton: #ffd3c2;
-  --plum: #a772e3;
+  --plum: #7b2240;
 
   /* Líneas — casi invisibles; la separación se hace con espacio y fondo */
-  --rule: #eceaf3;
-  --hairline: #f0f0f4;
-  --lila: #ede8f7;
-  --lila-2: #ddd3ef;
-  --lila-soft: #f5f1fb;
+  --rule: #eee8ea;
+  --hairline: #f2eef0;
+  --lila: #f2e4e8;
+  --lila-2: #e3c7cf;
+  --lila-soft: #faf2f4;
 
   /* Sombras — apenas perceptibles, nunca duras */
   --shadow-soft: 0 1px 2px rgba(73, 74, 95, 0.04);
   --shadow-card: 0 2px 8px rgba(73, 74, 95, 0.05), 0 12px 32px -12px rgba(73, 74, 95, 0.08);
-  --shadow-sticker: 0 8px 24px -8px rgba(167, 114, 227, 0.35);
-  --shadow-focus: 0 0 0 3px rgba(167, 114, 227, 0.18);
+  --shadow-sticker: 0 8px 24px -8px rgba(123, 34, 64, 0.32);
+  --shadow-focus: 0 0 0 3px rgba(123, 34, 64, 0.18);
 
   /* Radios — generosos */
   --r-sm: 10px;
@@ -86,25 +86,25 @@
   --mis-y: 0px;
 
   /* shadcn/ui — mapeado a la paleta nueva */
-  --background: 260 33% 98%;
+  --background: 0 17% 98%;
   --foreground: 237 13% 33%;
   --card: 0 0% 100%;
   --card-foreground: 237 13% 33%;
   --popover: 0 0% 100%;
   --popover-foreground: 237 13% 33%;
-  --primary: 271 66% 67%;
+  --primary: 340 57% 31%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 262 33% 95%;
+  --secondary: 345 15% 95%;
   --secondary-foreground: 237 13% 33%;
-  --muted: 262 33% 95%;
-  --muted-foreground: 271 8% 45%;
-  --accent: 271 55% 95%;
-  --accent-foreground: 271 45% 40%;
+  --muted: 345 15% 95%;
+  --muted-foreground: 340 8% 45%;
+  --accent: 343 44% 94%;
+  --accent-foreground: 339 58% 26%;
   --destructive: 0 72% 58%;
   --destructive-foreground: 0 0% 100%;
-  --border: 260 20% 94%;
-  --input: 260 20% 94%;
-  --ring: 271 66% 67%;
+  --border: 340 15% 92%;
+  --input: 340 15% 92%;
+  --ring: 340 57% 31%;
   --radius: 0.75rem;
 }
 
