@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { AppPromoAd } from '@/components/ads/AppPromoAd';
 import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { ProPageRenderer } from '@/components/ProPageRenderer';
@@ -293,8 +292,6 @@ function AnswerScene({
                 </Link>
             </div>
 
-            <AppPromoAd app="mydiess" variant="compact" placement="public-answer" style={{ marginTop: 28, maxWidth: 380 }} />
-
             <button
                 onClick={onReset}
                 style={{ marginTop: 32, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.15em' }}
@@ -440,8 +437,6 @@ export default function PublicPageView() {
                                     </button>
                                 </Link>
                             </div>
-
-                            <AppPromoAd app="mydiess" variant="compact" placement="public-answer-pro" style={{ marginTop: 22 }} />
                         </div>
                     </div>
                 )}

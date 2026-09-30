@@ -11,7 +11,6 @@ import { Plus, Eye, Trash2, ToggleLeft, ToggleRight, Crown, Sparkles, Link2, Clo
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { getTimeAgo, copyToClipboard } from '@/lib/utils';
-import { AppPromoAd } from '@/components/ads/AppPromoAd';
 
 // ── Mini stat ────────────────────────────────────────────────
 function Mini({ n, l, accent }: { n: string | number; l: string; accent?: boolean }) {
@@ -442,7 +441,6 @@ export default function DashboardPage() {
                                     setOpenMenuId={setOpenMenuId}
                                 />
                             ))}
-                            <AppPromoAd variant="card" placement="dashboard" />
                             {filter === 'all' && <NewCard onClick={handleCreate} />}
                         </div>
                     )}
