@@ -4,10 +4,10 @@ import { useState, useRef } from 'react';
 import { useAuthStore } from '@/store';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { Menu, X, LogOut, Crown, Heart } from 'lucide-react';
+import { Menu, X, LogOut, Crown, Heart, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { NotificationBell } from '@/components/NotificationBell';
 import { LoginButton } from '@/components/auth/login-page';
@@ -36,6 +36,8 @@ export function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const headerRef = useRef<HTMLElement>(null);
     const router = useRouter();
+    const pathname = usePathname();
+    const onDashboard = pathname === '/dashboard';
     const { t } = useTranslation();
 
     const handleLogout = async () => {
@@ -64,7 +66,7 @@ export function Header() {
             style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 position: 'sticky', top: 0, zIndex: 50,
-                background: 'rgba(249, 248, 252, 0.85)',
+                background: 'var(--surface-blur)',
                 backdropFilter: 'blur(12px)',
                 borderBottom: '1px solid var(--hairline)',
             }}
@@ -90,14 +92,23 @@ export function Header() {
                 {navLinks.map(({ href, label }) => (
                     <Link key={href} href={href}
                         style={{ padding: '8px 14px', borderRadius: 8, color: 'var(--ink-soft)', textDecoration: 'none', fontSize: 15, fontWeight: 500 }}
-                        className="hover:bg-paper-2 hover:!text-[#494a5f] transition-colors">
+                        className="hover:bg-paper-2 hover:!text-[var(--ink-black)] transition-colors">
                         {label}
                     </Link>
                 ))}
                 {user && (
+                    // Destacado: es a donde vuelve el usuario con sesión. Relleno
+                    // suave de acento, y sólido cuando ya está en el dashboard.
                     <Link href="/dashboard"
-                        style={{ padding: '8px 14px', borderRadius: 8, color: 'var(--ink-soft)', textDecoration: 'none', fontSize: 15, fontWeight: 500 }}
-                        className="hover:bg-paper-2 hover:!text-[#494a5f] transition-colors">
+                        aria-current={onDashboard ? 'page' : undefined}
+                        style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 6,
+                            padding: '8px 14px', borderRadius: 999, textDecoration: 'none', fontSize: 15, fontWeight: 700,
+                            background: onDashboard ? 'var(--accent-hex)' : 'var(--accent-soft)',
+                            color: onDashboard ? '#fff' : 'var(--accent-2-hex)',
+                        }}
+                        className="hover:brightness-95 transition-all">
+                        <LayoutGrid size={15} strokeWidth={2.4} />
                         {t.nav.myPages}
                     </Link>
                 )}
@@ -164,7 +175,7 @@ export function Header() {
                 <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     style={{ width: 40, height: 40, border: 'none', borderRadius: 10, background: 'var(--paper-2)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                    aria-label="Menú"
+                    aria-label={t.nav.menu}
                 >
                     {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
                 </button>
@@ -186,10 +197,20 @@ export function Header() {
                     maxHeight: 'calc(100vh - 60px)',
                 }}
             >
-                {[
-                    ...navLinks,
-                    ...(user ? [{ href: '/dashboard', label: t.nav.myPages }] : []),
-                ].map(({ href, label }) => (
+                {user && (
+                    <Link href="/dashboard" onClick={closeMobile}
+                        aria-current={onDashboard ? 'page' : undefined}
+                        style={{
+                            padding: '15px 16px', borderRadius: 12, fontSize: 17, fontWeight: 700, textDecoration: 'none',
+                            display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6,
+                            background: onDashboard ? 'var(--accent-hex)' : 'var(--accent-soft)',
+                            color: onDashboard ? '#fff' : 'var(--accent-2-hex)',
+                        }}>
+                        <LayoutGrid size={18} strokeWidth={2.4} />
+                        {t.nav.myPages}
+                    </Link>
+                )}
+                {navLinks.map(({ href, label }) => (
                     <Link key={href} href={href} onClick={closeMobile}
                         style={{ padding: '15px 16px', borderRadius: 12, fontSize: 17, fontWeight: 600, color: 'var(--ink-black)', textDecoration: 'none', display: 'block' }}
                         className="active:bg-paper-2">

@@ -113,7 +113,7 @@ export default function UpgradePage() {
                         </div>
                         <div className="mono-eyebrow" style={{ color: 'rgba(255,255,255,0.85)', marginBottom: 12 }}>Pro</div>
                         <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4 }}>
-                            <span className="serif-display" style={{ fontSize: 56, color: 'white' }}>$9</span>
+                            <span className="serif-display" style={{ fontSize: 56, color: 'white' }}>$3.99</span>
                             <span style={{ fontSize: 15, opacity: 0.7 }}>{t.upgrade.oncePayment}</span>
                         </div>
                         <p style={{ fontSize: 15, marginBottom: 24, opacity: 0.85 }}>{t.upgrade.permanentAccess}</p>

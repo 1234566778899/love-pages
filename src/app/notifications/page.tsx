@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store';
 import { Header } from '@/components/layout/header';
@@ -20,7 +20,9 @@ import {
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, enUS } from 'date-fns/locale';
+import { useTranslation } from '@/i18n';
+import type { Translations } from '@/i18n/translations/es';
 
 interface NotificationItem {
     _id: string;
@@ -34,22 +36,24 @@ interface NotificationItem {
     createdAt: string;
 }
 
-const TYPE_STYLES: Record<string, { bg: string; border: string; label: string }> = {
-    info: { bg: 'bg-[var(--lila-soft)]', border: 'border-[var(--ink-black)]', label: 'Info' },
-    success: { bg: 'bg-[var(--paper-soft)]', border: 'border-[var(--ink-black)]', label: 'Éxito' },
-    warning: { bg: 'bg-[var(--paper-2)]', border: 'border-[var(--ink-black)]', label: 'Aviso' },
-    promo: { bg: 'bg-[var(--lila)]', border: 'border-[var(--ink-black)]', label: 'Promo' },
-    update: { bg: 'bg-[var(--paper-soft)]', border: 'border-[var(--ink-black)]', label: 'Update' },
-    response: { bg: 'bg-[var(--melocoton)]', border: 'border-[var(--ink-black)]', label: 'Respuesta' },
-    system: { bg: 'bg-[var(--paper)]', border: 'border-[var(--ink-black)]', label: 'Sistema' },
+type NotifKey = keyof Translations['notifications'];
+
+const TYPE_STYLES: Record<string, { bg: string; border: string; label: NotifKey }> = {
+    info: { bg: 'bg-[var(--lila-soft)]', border: 'border-[var(--ink-black)]', label: 'typeInfo' },
+    success: { bg: 'bg-[var(--paper-soft)]', border: 'border-[var(--ink-black)]', label: 'typeSuccess' },
+    warning: { bg: 'bg-[var(--paper-2)]', border: 'border-[var(--ink-black)]', label: 'typeWarning' },
+    promo: { bg: 'bg-[var(--lila)]', border: 'border-[var(--ink-black)]', label: 'typePromo' },
+    update: { bg: 'bg-[var(--paper-soft)]', border: 'border-[var(--ink-black)]', label: 'typeUpdate' },
+    response: { bg: 'bg-[var(--melocoton)]', border: 'border-[var(--ink-black)]', label: 'typeResponse' },
+    system: { bg: 'bg-[var(--paper)]', border: 'border-[var(--ink-black)]', label: 'typeSystem' },
 };
 
-const FILTERS = [
-    { id: 'all', label: 'Todas' },
-    { id: 'unread', label: 'No leídas' },
-    { id: 'promo', label: 'Promos' },
-    { id: 'update', label: 'Updates' },
-    { id: 'response', label: 'Respuestas' },
+const FILTERS: { id: string; label: NotifKey }[] = [
+    { id: 'all', label: 'filterAll' },
+    { id: 'unread', label: 'filterUnread' },
+    { id: 'promo', label: 'filterPromos' },
+    { id: 'update', label: 'filterUpdates' },
+    { id: 'response', label: 'filterResponses' },
 ];
 
 export default function NotificationsPage() {
@@ -62,6 +66,11 @@ export default function NotificationsPage() {
     const [hasMore, setHasMore] = useState(true);
     const [activeFilter, setActiveFilter] = useState('all');
     const [unreadCount, setUnreadCount] = useState(0);
+    const { t, locale } = useTranslation();
+    // La carga arranca antes de que se aplique el idioma guardado; la ref hace
+    // que el toast de error salga en el idioma vigente al fallar.
+    const tRef = useRef(t);
+    tRef.current = t;
 
     const fetchNotifications = useCallback(
         async (pageNum: number, reset = false) => {
@@ -86,7 +95,7 @@ export default function NotificationsPage() {
                 setPage(pageNum);
             } catch (error) {
                 console.error('Error fetching notifications:', error);
-                toast.error('Error al cargar notificaciones');
+                toast.error(tRef.current.notifications.loadError, { id: 'notifications-load' });
             } finally {
                 setLoading(false);
                 setLoadingMore(false);
@@ -117,7 +126,7 @@ export default function NotificationsPage() {
             );
             setUnreadCount((prev) => Math.max(0, prev - 1));
         } catch (error) {
-            toast.error('Error al marcar notificación');
+            toast.error(t.notifications.markError);
         }
     };
 
@@ -126,9 +135,9 @@ export default function NotificationsPage() {
             await api.notifications.markAllAsRead();
             setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
             setUnreadCount(0);
-            toast.success('Todas marcadas como leídas');
+            toast.success(t.notifications.allMarkedRead);
         } catch (error) {
-            toast.error('Error al marcar notificaciones');
+            toast.error(t.notifications.markAllError);
         }
     };
 
@@ -149,7 +158,7 @@ export default function NotificationsPage() {
 
     const timeAgo = (date: string) => {
         try {
-            return formatDistanceToNow(new Date(date), { addSuffix: true, locale: es });
+            return formatDistanceToNow(new Date(date), { addSuffix: true, locale: locale === 'en' ? enUS : es });
         } catch {
             return '';
         }
@@ -186,7 +195,7 @@ export default function NotificationsPage() {
                         <div>
                             <h1 className="serif-display flex items-center gap-2" style={{ fontSize: 32, color: 'var(--ink-black)' }}>
                                 <Bell className="w-5 h-5" style={{ color: 'var(--accent-hex)' }} />
-                                notificaciones
+                                {t.notifications.title.toLowerCase()}
                                 {unreadCount > 0 && (
                                     <span style={{ padding: '2px 8px', background: 'var(--accent-hex)', color: 'var(--paper)', fontSize: 14, fontWeight: 700, fontFamily: 'var(--mono)', letterSpacing: 0 }}>
                                         {unreadCount}
@@ -204,8 +213,8 @@ export default function NotificationsPage() {
                             className="gap-1" style={{ color: 'var(--ink-black)' }}
                         >
                             <CheckCheck className="w-4 h-4" />
-                            <span className="hidden sm:inline">Marcar todas como leídas</span>
-                            <span className="sm:hidden">Leer todas</span>
+                            <span className="hidden sm:inline">{t.notifications.markAllRead}</span>
+                            <span className="sm:hidden">{t.notifications.readAll}</span>
                         </Button>
                     )}
                 </div>
@@ -224,7 +233,7 @@ export default function NotificationsPage() {
                                 fontFamily: 'var(--mono)', letterSpacing: 0,
                             }}
                         >
-                            {filter.label}
+                            {t.notifications[filter.label]}
                             {filter.id === 'unread' && unreadCount > 0 && (
                                 <span className="ml-1.5 px-1.5 py-0.5 bg-white/20 rounded-full text-xs">
                                     {unreadCount}
@@ -244,13 +253,13 @@ export default function NotificationsPage() {
                         <BellOff className="w-16 h-16 text-gray-200 mx-auto mb-4" />
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">
                             {activeFilter === 'unread'
-                                ? '¡Todo al día!'
-                                : 'Sin notificaciones'}
+                                ? t.notifications.allUpToDate
+                                : t.notifications.noNotifications}
                         </h3>
                         <p className="text-gray-500 text-sm">
                             {activeFilter === 'unread'
-                                ? 'No tienes notificaciones pendientes'
-                                : 'Aquí aparecerán tus notificaciones'}
+                                ? t.notifications.noPending
+                                : t.notifications.willAppearHere}
                         </p>
                     </div>
                 ) : (
@@ -294,7 +303,7 @@ export default function NotificationsPage() {
                                                             <span
                                                                 className={`px-1.5 py-0.5 text-[10px] font-semibold rounded ${style.bg} ${style.border} border`}
                                                             >
-                                                                {style.label}
+                                                                {t.notifications[style.label]}
                                                             </span>
                                                         </div>
                                                         <p className="text-sm text-gray-500 mt-1 whitespace-pre-wrap">
@@ -310,7 +319,7 @@ export default function NotificationsPage() {
                                                                 handleMarkAsRead(notification._id);
                                                             }}
                                                             style={{ flexShrink: 0, padding: 4, cursor: 'pointer', background: 'none', border: 'none' }}
-                                                            title="Marcar como leída"
+                                                            title={t.notifications.markAsRead}
                                                         >
                                                             <div style={{ width: 10, height: 10, background: 'var(--accent-hex)', borderRadius: '50%' }} />
                                                             <Check style={{ width: 14, height: 14, color: 'var(--ink-black)', display: 'none' }} />
@@ -350,10 +359,10 @@ export default function NotificationsPage() {
                                     {loadingMore ? (
                                         <>
                                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            Cargando...
+                                            {t.notifications.loading}
                                         </>
                                     ) : (
-                                        'Cargar más'
+                                        t.notifications.loadMore
                                     )}
                                 </Button>
                             </div>

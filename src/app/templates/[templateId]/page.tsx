@@ -28,6 +28,7 @@ import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { CustomSlugInput } from '@/components/CustomSlugInput';
 import { TemplateImageUpload } from '@/components/TemplateImageUpload';
+import { useTranslation } from '@/i18n';
 
 interface ImageConfig {
     maxSizeMB?: number;
@@ -87,6 +88,11 @@ export default function TemplateDetailPage() {
     const router = useRouter();
     const templateId = params.templateId as string;
     const { user, loading: authLoading } = useAuthStore();
+    const { t } = useTranslation();
+    const tt = t.templateDetail;
+    // La carga arranca al montar, antes de que se aplique el idioma guardado.
+    const ttRef = useRef(tt);
+    ttRef.current = tt;
 
     const [template, setTemplate] = useState<TemplateData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -141,7 +147,7 @@ export default function TemplateDetailPage() {
             setTemplate(data.data);
         } catch (error) {
             console.error('Error loading template:', error);
-            toast.error('Error al cargar plantilla');
+            toast.error(ttRef.current.loadError);
             router.push('/templates');
         } finally {
             setLoading(false);
@@ -223,21 +229,21 @@ export default function TemplateDetailPage() {
 
     const handleCreatePage = async () => {
         if (!user) {
-            toast.error('Inicia sesión con Google para crear tu página');
+            toast.error(tt.loginToCreate);
             return;
         }
         if (freeLimitReached) {
-            toast.error('El plan gratuito permite crear solo 1 pagina. Actualiza a PRO para paginas ilimitadas.');
+            toast.error(tt.freeLimit);
             router.push('/upgrade');
             return;
         }
 
         if (template?.isPro && !isPro) {
-            toast.error('Esta plantilla requiere el plan PRO');
+            toast.error(tt.requiresPro);
             return;
         }
         if (!recipientName.trim()) {
-            toast.error('El nombre del destinatario es requerido');
+            toast.error(tt.recipientRequired);
             return;
         }
 
@@ -248,12 +254,12 @@ export default function TemplateDetailPage() {
                 if (field.type === 'image_url') {
                     // Para imágenes requeridas: verificar que hay una URL
                     if (!value || !value.trim()) {
-                        toast.error(`La imagen "${field.label}" es requerida`);
+                        toast.error(tt.imageRequired.replace('{label}', field.label));
                         return;
                     }
                 } else {
                     if (!value || !value.trim()) {
-                        toast.error(`El campo "${field.label}" es requerido`);
+                        toast.error(tt.fieldRequired.replace('{label}', field.label));
                         return;
                     }
                 }
@@ -271,12 +277,12 @@ export default function TemplateDetailPage() {
                 customSlug: customSlug.trim() || undefined,
             });
 
-            toast.success('¡Página creada desde plantilla!');
+            toast.success(tt.created);
             const identifier = data.data.customSlug || data.data.shortId;
             router.push(`/p/${identifier}`);
         } catch (error: any) {
             console.error('Error creating page:', error);
-            toast.error(error.response?.data?.message || 'Error al crear la página');
+            toast.error(error.response?.data?.message || tt.createError);
         } finally {
             setCreating(false);
         }
@@ -317,7 +323,7 @@ export default function TemplateDetailPage() {
             <main className="container px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto">
                 {freeLimitReached && (
                     <div className="mb-6" style={{ border: '1px solid var(--hairline)', background: 'var(--paper-2)', padding: '10px 14px', fontSize: 15, color: 'var(--ink-black)' }}>
-                        El plan gratuito permite crear solo 1 pagina. Actualiza a PRO para paginas ilimitadas.
+                        {tt.freeLimit}
                     </div>
                 )}
 
@@ -342,7 +348,7 @@ export default function TemplateDetailPage() {
                     </div>
                     <div className="flex items-center gap-2 text-xs text-gray-400">
                         <Users className="w-3.5 h-3.5" />
-                        {template.usageCount} usos
+                        {tt.uses.replace('{count}', String(template.usageCount))}
                     </div>
                 </div>
 
@@ -355,7 +361,7 @@ export default function TemplateDetailPage() {
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-base flex items-center gap-2">
                                         <Eye className="w-4 h-4 text-gray-500" />
-                                        Vista Previa
+                                        {tt.preview}
                                     </CardTitle>
                                     <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
                                         <button
@@ -448,7 +454,7 @@ export default function TemplateDetailPage() {
                                         {/* Editable fields summary */}
                                         <div className="p-3 bg-gray-50 rounded-xl">
                                             <p className="text-xs font-medium text-gray-500 mb-2">
-                                                Campos personalizables:
+                                                {tt.customizableFields}
                                             </p>
                                             <div className="flex flex-wrap gap-1.5">
                                                 {template.editableFields
@@ -479,9 +485,9 @@ export default function TemplateDetailPage() {
                                             {fieldCounts.image > 0 && (
                                                 <p className="text-xs text-purple-500 mt-2 flex items-center gap-1">
                                                     <ImageIcon className="w-3 h-3" />
-                                                    {fieldCounts.image} campo
-                                                    {fieldCounts.image > 1 ? 's' : ''} de
-                                                    imagen — sube tus propias fotos
+                                                    {fieldCounts.image > 1
+                                                        ? tt.imageFieldsMany.replace('{count}', String(fieldCounts.image))
+                                                        : tt.imageFieldsOne}
                                                 </p>
                                             )}
                                         </div>
@@ -495,22 +501,22 @@ export default function TemplateDetailPage() {
                                                 size="lg"
                                             >
                                                 <Pencil className="w-4 h-4" />
-                                                Personalizar y Crear
+                                                {tt.customizeAndCreate}
                                             </Button>
                                         ) : (
                                             <div className="space-y-3">
                                                 <div style={{ padding: '24px', border: '1px solid var(--hairline)', background: 'var(--paper-soft)', textAlign: 'center', boxShadow: 'var(--shadow-card)' }}>
                                                     <Lock style={{ width: 24, height: 24, color: 'var(--ink-black)', margin: '0 auto 10px' }} />
                                                     <p style={{ fontWeight: 700, fontSize: 14, marginBottom: 6, fontFamily: 'var(--display)', textTransform: 'none', color: 'var(--ink-black)' }}>
-                                                        Plantilla exclusiva PRO
+                                                        {tt.proExclusive}
                                                     </p>
                                                     <p style={{ fontSize: 15, color: 'var(--ink-soft)', marginBottom: 16 }}>
-                                                        Actualiza a PRO para usar plantillas premium
+                                                        {tt.upgradeForPremium}
                                                     </p>
                                                     <Link href="/upgrade">
                                                         <button className="btn-accent" style={{ padding: '10px 20px', fontSize: 15, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                                                             <Crown style={{ width: 13, height: 13 }} />
-                                                            Obtener PRO — $9 USD/año
+                                                            {tt.getPro}
                                                         </button>
                                                     </Link>
                                                 </div>
@@ -527,7 +533,7 @@ export default function TemplateDetailPage() {
                                         <div className="flex items-center justify-between">
                                             <CardTitle className="flex items-center gap-2 text-lg">
                                                 <Pencil className="w-5 h-5 text-pink-600" />
-                                                Personalizar
+                                                {tt.customize}
                                             </CardTitle>
                                             <Button
                                                 variant="ghost"
@@ -535,12 +541,11 @@ export default function TemplateDetailPage() {
                                                 onClick={() => setIsEditing(false)}
                                                 className="text-gray-500"
                                             >
-                                                Cancelar
+                                                {tt.cancel}
                                             </Button>
                                         </div>
                                         <CardDescription>
-                                            Edita los campos y ve los cambios en la vista
-                                            previa en tiempo real
+                                            {tt.editDesc}
                                         </CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
@@ -670,17 +675,17 @@ export default function TemplateDetailPage() {
                                     <CardHeader>
                                         <CardTitle className="text-base flex items-center gap-2">
                                             <Heart className="w-4 h-4 text-pink-600" />
-                                            Configuración de la página
+                                            {tt.pageSettings}
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <Input
-                                            label="Nombre del destinatario *"
+                                            label={tt.recipientLabel}
                                             value={recipientName}
                                             onChange={(e) =>
                                                 setRecipientName(e.target.value)
                                             }
-                                            placeholder="María"
+                                            placeholder={tt.recipientPlaceholder}
                                             maxLength={100}
                                         />
 
@@ -704,7 +709,7 @@ export default function TemplateDetailPage() {
                                             size="lg"
                                         >
                                             <Rocket className="w-5 h-5" />
-                                            Crear Página con esta Plantilla
+                                            {tt.createWithTemplate}
                                         </Button>
                                     </CardContent>
                                 </Card>

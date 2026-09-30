@@ -100,7 +100,7 @@ export default function PageDetailView() {
     const router = useRouter();
     const shortId = params.shortId as string;
     const { user, loading: authLoading } = useAuthStore();
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const isMobile = useMediaQuery('(max-width: 1023px)');
     const [pageData, setPageData] = useState<any>(null);
     const [stats, setStats] = useState<any>(null);
@@ -248,7 +248,7 @@ export default function PageDetailView() {
     };
 
     const formatDate = (dateStr: string) =>
-        new Date(dateStr).toLocaleDateString('es-PE', {
+        new Date(dateStr).toLocaleDateString(locale === 'en' ? 'en-US' : 'es-PE', {
             day: '2-digit', month: 'short', year: 'numeric',
             hour: '2-digit', minute: '2-digit',
         });

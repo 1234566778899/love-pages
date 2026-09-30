@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import toast from 'react-hot-toast';
+import { useTranslation } from '@/i18n';
 
 interface ImageConfig {
     maxSizeMB?: number;
@@ -42,6 +43,8 @@ export function TemplateImageUpload({
     imageConfig,
 }: TemplateImageUploadProps) {
     const [uploading, setUploading] = useState(false);
+    const { t } = useTranslation();
+    const ti = t.imageUpload;
     const [showUrlInput, setShowUrlInput] = useState(false);
     const [urlInputValue, setUrlInputValue] = useState('');
     const [dragOver, setDragOver] = useState(false);
@@ -62,14 +65,14 @@ export function TemplateImageUpload({
         ];
 
         if (!allowedTypes.includes(file.type)) {
-            toast.error('Solo se permiten imágenes JPG, PNG, GIF y WebP');
+            toast.error(ti.invalidType);
             return;
         }
 
         // Validar tamaño
         const maxBytes = 15 * 1024 * 1024;
         if (file.size > maxBytes) {
-            toast.error(`La imagen no puede superar 15MB`);
+            toast.error(ti.tooLarge);
             return;
         }
 
@@ -81,10 +84,10 @@ export function TemplateImageUpload({
 
             const { data } = await api.templates.uploadImage(templateId, formData);
             onChange(data.data.imageUrl);
-            toast.success('Imagen subida correctamente');
+            toast.success(ti.uploaded);
         } catch (error: any) {
             console.error('Error uploading image:', error);
-            toast.error(error.response?.data?.message || 'Error al subir la imagen');
+            toast.error(error.response?.data?.message || ti.uploadError);
         } finally {
             setUploading(false);
         }
@@ -120,15 +123,15 @@ export function TemplateImageUpload({
         try {
             const parsed = new URL(trimmed);
             if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-                toast.error('La URL debe empezar con https://');
+                toast.error(ti.httpsRequired);
                 return;
             }
             onChange(trimmed);
             setShowUrlInput(false);
             setUrlInputValue('');
-            toast.success('URL de imagen aplicada');
+            toast.success(ti.urlApplied);
         } catch {
-            toast.error('URL no válida');
+            toast.error(ti.invalidUrl);
         }
     };
 
@@ -143,7 +146,7 @@ export function TemplateImageUpload({
                 {required && <span className="text-red-500 ml-1">*</span>}
                 {aspectRatio && (
                     <span className="ml-2 text-xs text-gray-400 font-normal">
-                        Proporción recomendada: {aspectRatio}
+                        {ti.recommendedRatio.replace('{ratio}', aspectRatio)}
                     </span>
                 )}
             </label>
@@ -172,7 +175,7 @@ export function TemplateImageUpload({
                                 onClick={() => fileInputRef.current?.click()}
                             >
                                 <Upload className="w-3.5 h-3.5 mr-1" />
-                                Cambiar
+                                {ti.change}
                             </Button>
                             <Button
                                 type="button"
@@ -182,7 +185,7 @@ export function TemplateImageUpload({
                                 onClick={handleRemove}
                             >
                                 <X className="w-3.5 h-3.5 mr-1" />
-                                Quitar
+                                {ti.remove}
                             </Button>
                         </div>
                     </div>
@@ -206,7 +209,7 @@ export function TemplateImageUpload({
                     {uploading ? (
                         <div className="flex flex-col items-center gap-2">
                             <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
-                            <p className="text-sm text-gray-600">Subiendo imagen...</p>
+                            <p className="text-sm text-gray-600">{ti.uploading}</p>
                         </div>
                     ) : (
                         <div className="flex flex-col items-center gap-2">
@@ -215,10 +218,10 @@ export function TemplateImageUpload({
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-gray-700">
-                                    Arrastra una imagen o haz clic para seleccionar
+                                    {ti.dropHint}
                                 </p>
                                 <p className="text-xs text-gray-400 mt-1">
-                                    JPG, PNG, GIF o WebP • Máximo {maxSizeMB}MB
+                                    {ti.formats.replace('{size}', String(maxSizeMB))}
                                 </p>
                             </div>
                         </div>
@@ -243,14 +246,14 @@ export function TemplateImageUpload({
                     className="text-xs text-gray-500 hover:text-pink-600 flex items-center gap-1 transition-colors"
                 >
                     <LinkIcon className="w-3 h-3" />
-                    O pega una URL de imagen
+                    {ti.pasteUrl}
                 </button>
             ) : (
                 <div className="flex gap-2 items-start">
                     <Input
                         value={urlInputValue}
                         onChange={(e) => setUrlInputValue(e.target.value)}
-                        placeholder="https://ejemplo.com/imagen.jpg"
+                        placeholder={ti.urlPlaceholder}
                         className="text-sm flex-1"
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
@@ -266,7 +269,7 @@ export function TemplateImageUpload({
                         disabled={!urlInputValue.trim()}
                         className="shrink-0"
                     >
-                        Aplicar
+                        {ti.apply}
                     </Button>
                     <Button
                         type="button"

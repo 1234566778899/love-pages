@@ -5,7 +5,8 @@ import { Bell, Check, CheckCheck, ExternalLink } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, enUS } from 'date-fns/locale';
+import { useTranslation } from '@/i18n';
 
 interface NotificationItem {
     _id: string;
@@ -37,6 +38,7 @@ export function NotificationBell() {
     const [loading, setLoading] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const { t, locale } = useTranslation();
 
     // Obtener contador de no leídas
     const fetchUnreadCount = useCallback(async () => {
@@ -122,7 +124,7 @@ export function NotificationBell() {
 
     const timeAgo = (date: string) => {
         try {
-            return formatDistanceToNow(new Date(date), { addSuffix: true, locale: es });
+            return formatDistanceToNow(new Date(date), { addSuffix: true, locale: locale === 'en' ? enUS : es });
         } catch {
             return '';
         }
@@ -134,7 +136,7 @@ export function NotificationBell() {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Notificaciones"
+                aria-label={t.notifications.title}
             >
                 <Bell className="w-5 h-5 text-gray-600" />
                 {unreadCount > 0 && (
@@ -150,7 +152,7 @@ export function NotificationBell() {
                     {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50/80">
                         <h3 className="font-semibold text-gray-900 text-sm">
-                            Notificaciones
+                            {t.notifications.title}
                             {unreadCount > 0 && (
                                 <span className="ml-2 px-1.5 py-0.5 bg-pink-100 text-pink-600 text-xs rounded-full font-bold">
                                     {unreadCount}
@@ -163,7 +165,7 @@ export function NotificationBell() {
                                 className="text-xs text-pink-600 hover:text-pink-700 font-medium flex items-center gap-1"
                             >
                                 <CheckCheck className="w-3.5 h-3.5" />
-                                Marcar todas
+                                {t.notifications.markAll}
                             </button>
                         )}
                     </div>
@@ -178,7 +180,7 @@ export function NotificationBell() {
                             <div className="text-center py-10 px-4">
                                 <Bell className="w-10 h-10 text-gray-200 mx-auto mb-2" />
                                 <p className="text-sm text-gray-400">
-                                    No tienes notificaciones
+                                    {t.notifications.noNotificationsShort}
                                 </p>
                             </div>
                         ) : (
@@ -244,7 +246,7 @@ export function NotificationBell() {
                                 }}
                                 className="w-full text-center text-xs text-pink-600 hover:text-pink-700 font-medium"
                             >
-                                Ver todas las notificaciones
+                                {t.notifications.viewAll}
                             </button>
                         </div>
                     )}

@@ -75,25 +75,69 @@ export function isDarkColor(hex: string): boolean {
     return luminance(hex) < 140;
 }
 
-/** De dos candidatos, el que más contrasta con `base`. */
-function bestOn(base: string, a: string, b: string): string {
-    const lb = luminance(base);
-    return Math.abs(luminance(a) - lb) >= Math.abs(luminance(b) - lb) ? a : b;
+/** Luminancia relativa WCAG 2.x. */
+function relLuminance(hex: string): number {
+    const c = parseHex(hex);
+    if (!c) return 1;
+    const [r, g, b] = c.map((v) => {
+        const x = v / 255;
+        return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** Contraste WCAG entre dos colores (1 a 21). AA pide 4.5 en texto normal y 3 en grande. */
+export function contrastRatio(a: string, b: string): number {
+    const la = relLuminance(a);
+    const lb = relLuminance(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+/** Texto normal (WCAG AA). */
+const AA = 4.5;
+/** Extremos a los que se recurre cuando la paleta no da para más. */
+const INK_DARK = '#1b1721';
+const INK_LIGHT = '#ffffff';
+
+/**
+ * Acerca `fg` a `toward` en pasos hasta que se lea sobre todos los `bgs`.
+ * Si ni así llega (p. ej. el texto elegido se parece al fondo), sigue hacia el
+ * negro o el blanco, el que más contraste. Así cualquier paleta, también las
+ * que el usuario crea a mano, deja el texto derivado legible.
+ */
+function ensureContrast(fg: string, bgs: string[], toward: string, min = AA): string {
+    const worst = (c: string) => Math.min(...bgs.map((b) => contrastRatio(c, b)));
+    if (worst(fg) >= min) return fg;
+    for (let t = 0.1; t < 1.001; t += 0.1) {
+        const c = mix(fg, toward, t);
+        if (worst(c) >= min) return c;
+    }
+    const end = worst(INK_DARK) >= worst(INK_LIGHT) ? INK_DARK : INK_LIGHT;
+    for (let t = 0.1; t < 1.001; t += 0.1) {
+        const c = mix(fg, end, t);
+        if (worst(c) >= min) return c;
+    }
+    // Con tonos medios (p. ej. el rosa de Minimal) sólo el negro puro llega.
+    return worst('#000000') >= worst(INK_LIGHT) ? '#000000' : INK_LIGHT;
 }
 
 /**
- * El acento sirve para rellenos aunque se parezca al papel, pero como texto
- * hay que separarlo: se acerca a la tinta hasta que se lee (p. ej. el rosa de
- * Jardín sobre papel rosa desaparecía).
+ * Superficie ligeramente separada del papel (botón «No», etiquetas) sobre la
+ * que va `ink`. Se tiñe hacia `tint` como siempre, pero si eso la acerca
+ * demasiado a la tinta (texto claro sobre papel oscuro), se separa en sentido
+ * contrario: la superficie sigue viéndose y el texto gana contraste.
  */
-function readableInk(accent: string, bg: string, text: string): string {
-    const lbg = luminance(bg);
-    let out = accent;
-    for (let step = 0; step < 6; step += 1) {
-        if (Math.abs(luminance(out) - lbg) >= 70) break;
-        out = mix(out, text, 0.2);
-    }
-    return out;
+function surface(bg: string, tint: string, amount: number, ink: string): string {
+    const toward = mix(bg, tint, amount);
+    if (contrastRatio(ink, toward) >= AA) return toward;
+    const away = contrastRatio(INK_DARK, ink) > contrastRatio(INK_LIGHT, ink) ? INK_DARK : INK_LIGHT;
+    const opposite = mix(bg, away, amount);
+    return contrastRatio(ink, opposite) >= contrastRatio(ink, toward) ? opposite : toward;
+}
+
+/** De los candidatos, el que más contrasta con `base`. */
+function mostContrasting(base: string, candidates: string[]): string {
+    return candidates.reduce((best, c) => (contrastRatio(c, base) > contrastRatio(best, base) ? c : best));
 }
 
 /**
@@ -105,11 +149,17 @@ export function pageThemeVars(palette: PagePalette): CSSProperties {
     const text = palette.textColor || DEFAULT_COLORS.text;
     const accent = palette.accentColor || DEFAULT_COLORS.accent;
 
+    const paper2 = surface(bg, text, 0.08, text);
+    // La firma se calcula contra el papel; su etiqueta, sobre un lavado del
+    // acento que se aparta de ella si hace falta.
+    const accentInk = ensureContrast(accent, [bg], text);
+    const accentWash = surface(bg, accent, 0.14, accentInk);
+
     return {
         // Papel y sus profundidades
         '--paper': bg,
         '--paper-soft': mix(bg, text, 0.03),
-        '--paper-2': mix(bg, text, 0.08),
+        '--paper-2': paper2,
         '--paper-3': mix(bg, text, 0.16),
 
         // Tintas
@@ -117,27 +167,38 @@ export function pageThemeVars(palette: PagePalette): CSSProperties {
         '--ink': text,
         '--ink-2': text,
         '--ink-blue': text,
-        '--ink-soft': rgba(text, 0.62),
+        // El mensaje. Antes era el texto al 62 % de opacidad, y en casi todas
+        // las paletas quedaba por debajo de 4.5:1. Ahora parte de ese tono más
+        // suave y se oscurece o aclara lo justo para leerse.
+        '--ink-soft': ensureContrast(mix(bg, text, 0.62), [bg, paper2], text),
         '--rule': rgba(text, 0.24),
 
         // Acento
         '--ink-red': accent,
         '--accent-hex': accent,
-        // Texto sobre el acento: con paletas claras (Jardín, Cerezo) el papel
-        // sobre el acento quedaba claro sobre claro e ilegible.
-        '--on-accent': bestOn(accent, bg, text),
-        // El acento cuando hace de texto sobre el papel.
-        '--ink-red-ink': readableInk(accent, bg, text),
+        // Texto de los botones sobre el acento: el papel o la tinta, el que más
+        // contraste, y si ninguno llega, corregido hasta que se lea.
+        '--on-accent': ensureContrast(mostContrasting(accent, [bg, text]), [accent], mostContrasting(accent, [INK_DARK, INK_LIGHT])),
+        // El acento cuando hace de texto: la firma sobre el papel y la
+        // etiqueta «Una carta para…» sobre su lavado.
+        '--ink-red-ink': ensureContrast(accentInk, [bg, accentWash], text),
         '--ink-overlap': mix(accent, text, 0.45),
         '--plum': mix(accent, text, 0.45),
 
         // Lavados
         '--lila': rgba(text, 0.14),
         '--lila-2': rgba(text, 0.26),
-        '--melocoton': rgba(accent, 0.14),
+        '--melocoton': accentWash,
         '--melocoton-2': rgba(accent, 0.26),
     } as CSSProperties;
 }
+
+/**
+ * Halo del color del papel alrededor de las letras de la carta. Las
+ * partículas pasan por detrás del texto; sin esto, pétalos y corazones
+ * cruzaban el título y el mensaje y ensuciaban la lectura.
+ */
+export const LETTER_TEXT_HALO = '0 0 10px var(--paper), 0 0 18px var(--paper), 0 0 2px var(--paper)';
 
 /**
  * Familia tipográfica para los títulos. La opción por defecto usa la display de

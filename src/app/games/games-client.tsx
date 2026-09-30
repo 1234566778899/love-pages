@@ -14,7 +14,7 @@ const GAME_META: { id: string; emoji: string; tone: string }[] = [
     { id: 'anonymous-questions', emoji: '🎭', tone: 'var(--butter)' },
 ];
 
-const APP_STORE_URL = 'https://apps.apple.com/es/app/gisus/id6780263578';
+const APP_STORE_URL = 'https://apps.apple.com/us/app/mydiess/id6811741530';
 
 /** Logotipo de Apple, para el botón de descarga. */
 function AppleLogo({ size = 20 }: { size?: number }) {
@@ -62,7 +62,7 @@ function AppPromo() {
             />
 
             <Image
-                src="/gisus-icon.jpg"
+                src="/ads/mydiess.jpg"
                 alt=""
                 width={128}
                 height={128}

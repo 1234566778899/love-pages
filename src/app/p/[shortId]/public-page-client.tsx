@@ -8,7 +8,7 @@ import { api } from '@/lib/api';
 import toast from 'react-hot-toast';
 import { ProPageRenderer } from '@/components/ProPageRenderer';
 import { ParticleCanvas, animToKind, hasParticles } from '@/components/ParticleCanvas';
-import { pageThemeVars, titleFontFamily, bodyFontFamily, googleFontsHref, DEFAULT_FONT } from '@/lib/page-theme';
+import { pageThemeVars, titleFontFamily, bodyFontFamily, googleFontsHref, DEFAULT_FONT, LETTER_TEXT_HALO } from '@/lib/page-theme';
 import { fleeDelta, clampDelta } from '@/lib/escape-button';
 import { createPortal } from 'react-dom';
 import { useTranslation } from '@/i18n';
@@ -195,6 +195,7 @@ function EscapeNoButton({
             }}
             style={{
                 position: 'relative',
+                whiteSpace: 'nowrap',
                 transform: `translate(${pos.x}px, ${pos.y}px)`,
                 transition: 'transform 180ms cubic-bezier(.2,.9,.3,1.1)',
                 background: 'var(--paper-2)',
@@ -385,15 +386,15 @@ export default function PublicPageView() {
         return (
             <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--paper)', padding: 24, fontFamily: 'var(--mono)' }}>
                 <div style={{ textAlign: 'center', maxWidth: 400 }}>
-                    <div className="mono-eyebrow" style={{ marginBottom: 16, color: 'var(--accent-hex)' }}>— página expirada —</div>
+                    <div className="mono-eyebrow" style={{ marginBottom: 16, color: 'var(--accent-hex)' }}>{t.publicPage.expiredEyebrow}</div>
                     <h1 className="serif-display" style={{ fontSize: 'clamp(48px, 10vw, 72px)', lineHeight: 0.88, color: 'var(--ink-black)', marginBottom: 16 }}>
-                        <span className="mis-red">esta</span> <span className="mis-blue">página</span> ya no está activa
+                        <span className="mis-red">{t.publicPage.expiredTitle1}</span> <span className="mis-blue">{t.publicPage.expiredTitle2}</span> {t.publicPage.expiredTitle3}
                     </h1>
                     <p style={{ fontSize: 15, color: 'var(--ink-soft)', lineHeight: 1.6, marginBottom: 28 }}>
-                        Las páginas del plan gratuito están disponibles por 7 días.
+                        {t.publicPage.expiredDesc}
                     </p>
                     <a href="/upgrade" className="btn-accent" style={{ display: 'inline-block', textDecoration: 'none' }}>
-                        crear con plan PRO
+                        {t.publicPage.expiredCta}
                     </a>
                 </div>
             </div>
@@ -512,7 +513,7 @@ export default function PublicPageView() {
                 <div style={{ position: 'absolute', top: 14, right: 20, zIndex: 5 }}>
                     <button
                         onClick={toggleMusic}
-                        aria-label="música"
+                        aria-label={t.publicPage.musicLabel}
                         style={{ width: 40, height: 40, borderRadius: 999, border: 'none', background: musicOn ? 'var(--accent-hex)' : 'var(--paper-2)', color: musicOn ? 'var(--on-accent)' : 'var(--ink-soft)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}
                     >
                         ♪
@@ -528,7 +529,7 @@ export default function PublicPageView() {
                         {/* Eyebrow */}
                         <div style={{ marginBottom: 22 }}>
                             <span style={{ display: 'inline-block', padding: '8px 18px', borderRadius: 999, background: 'var(--melocoton)', color: 'var(--ink-red-ink)', fontSize: 15, fontWeight: 600 }}>
-                                Una carta para {page.recipientName}
+                                {t.publicPage.letterFor.replace('{name}', page.recipientName)}
                             </span>
                         </div>
 
@@ -548,6 +549,7 @@ export default function PublicPageView() {
                                     lineHeight: 1.15,
                                     letterSpacing: '-0.025em',
                                     fontSize: 'clamp(40px, 10vw, 62px)', margin: 0, maxWidth: 380,
+                                    textShadow: LETTER_TEXT_HALO,
                                 }}
                             >
                                 {page.title}
@@ -556,7 +558,7 @@ export default function PublicPageView() {
 
                         {/* Message */}
                         {page.message && (
-                            <div style={{ marginTop: 24, fontFamily: bodyFontFamily(page.bodyFont), fontSize: 18, color: 'var(--ink-soft)', maxWidth: 340, lineHeight: 1.6 }}>
+                            <div style={{ marginTop: 24, fontFamily: bodyFontFamily(page.bodyFont), fontSize: 18, color: 'var(--ink-soft)', maxWidth: 340, lineHeight: 1.6, textShadow: LETTER_TEXT_HALO }}>
                                 {renderMsg(page.message)}
                             </div>
                         )}
@@ -576,16 +578,16 @@ export default function PublicPageView() {
                         {/* Sender */}
                         <div style={{ marginTop: 18, display: 'flex', alignItems: 'center', gap: 10 }}>
                             <span style={{ width: 18, height: 1, background: 'var(--ink-red-ink)' }} />
-                            <span style={{ fontSize: 26, color: 'var(--ink-red-ink)', fontFamily: 'var(--hand)' }}>Con amor</span>
+                            <span style={{ fontSize: 26, color: 'var(--ink-red-ink)', fontFamily: 'var(--hand)' }}>{t.publicPage.signOff}</span>
                             {stickers[2] && <span style={{ fontSize: 18 }}>{stickers[2]}</span>}
                         </div>
 
                         {/* CTA */}
-                        <div style={{ marginTop: 40, display: 'flex', gap: 16, alignItems: 'center', position: 'relative' }}>
+                        <div style={{ marginTop: 40, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 16, alignItems: 'center', position: 'relative' }}>
                             <button
                                 onClick={() => handleAnswer('yes')}
                                 className="btn-accent"
-                                style={{ padding: '14px 32px', fontSize: 15 }}
+                                style={{ padding: '14px 32px', fontSize: 15, whiteSpace: 'nowrap' }}
                             >
                                 {page.yesButtonText}
                             </button>

@@ -487,7 +487,7 @@ export default function LandingPage() {
     const { user } = useAuthStore();
     const { t } = useTranslation();
 
-    const occasions = ['san valentín', 'aniversarios', 'cumpleaños', 'declaraciones', 'amistad', 'pedidas', 'perdón'];
+    const occasions = t.landing.occasions;
 
     return (
         <div style={{ width: '100%', background: 'var(--paper)', color: INK, position: 'relative', overflowX: 'hidden' }}>
@@ -501,7 +501,7 @@ export default function LandingPage() {
             <header
                 style={{
                     position: 'sticky', top: 0, zIndex: 40,
-                    background: 'rgba(249, 248, 252, 0.85)',
+                    background: 'var(--surface-blur)',
                     backdropFilter: 'blur(12px)',
                     borderBottom: '1px solid var(--hairline)',
                 }}
@@ -533,7 +533,7 @@ export default function LandingPage() {
                                 key={href}
                                 href={href}
                                 style={{ fontSize: 15, fontWeight: 500, color: INK_SOFT, textDecoration: 'none' }}
-                                className="hover:!text-[#494a5f] transition-colors"
+                                className="hover:!text-[var(--ink-black)] transition-colors"
                             >
                                 {label}
                             </Link>
@@ -718,7 +718,7 @@ export default function LandingPage() {
                 >
                     <Stat n="2.4M" label={t.landing.statsPagesLabel} />
                     <Stat n="89%" label={t.landing.statsSiLabel} />
-                    <Stat n="$9" label={t.landing.statsProLabel} />
+                    <Stat n="$3.99" label={t.landing.statsProLabel} />
                 </div>
             </section>
 
@@ -807,7 +807,7 @@ export default function LandingPage() {
                         />
                         <PriceCard
                             plan="Pro"
-                            price="$9"
+                            price="$3.99"
                             sub={t.landing.proPlanSub}
                             pitch={t.landing.proPlanPitch}
                             features={[t.landing.proPlanFeature1, t.landing.proPlanFeature2, t.landing.proPlanFeature3, t.landing.proPlanFeature4, t.landing.proPlanFeature5, t.landing.proPlanFeature6]}
@@ -893,7 +893,7 @@ export default function LandingPage() {
                             key={href}
                             href={href}
                             style={{ fontSize: 15, color: INK_SOFT, textDecoration: 'none' }}
-                            className="hover:!text-[#494a5f] transition-colors"
+                            className="hover:!text-[var(--ink-black)] transition-colors"
                         >
                             {label}
                         </Link>

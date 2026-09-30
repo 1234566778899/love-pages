@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store';
 import { api } from '@/lib/api';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 // Componente interno que usa useSearchParams
 function PayPalReturnContent() {
@@ -13,6 +14,7 @@ function PayPalReturnContent() {
     const { user, loading: authLoading } = useAuthStore();
     const token = searchParams.get('token'); // Order ID de PayPal
     const captureAttempted = useRef(false);
+    const { t } = useTranslation();
 
     useEffect(() => {
         // ✅ FIX: Esperar a que la autenticación se resuelva
@@ -57,13 +59,13 @@ function PayPalReturnContent() {
             <div className="text-center space-y-4">
                 <Loader2 className="w-16 h-16 animate-spin mx-auto" style={{ color: 'var(--accent-hex)' }} />
                 <h1 className="text-2xl font-bold text-gray-900">
-                    Procesando tu pago...
+                    {t.payment.processing}
                 </h1>
                 <p className="text-gray-600">
-                    Estamos confirmando tu pago con PayPal
+                    {t.payment.confirmingPaypal}
                 </p>
                 <p className="text-sm text-gray-500">
-                    No cierres esta ventana
+                    {t.payment.dontCloseWindow}
                 </p>
             </div>
         </div>

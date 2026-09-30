@@ -25,13 +25,14 @@ function Mini({ n, l, accent }: { n: string | number; l: string; accent?: boolea
 
 // ── Sparkline chart ──────────────────────────────────────────
 function Sparkline({ points }: { points: number[] }) {
+    const { t } = useTranslation();
     const max = Math.max(...points, 1);
     const w = 200, h = 48;
     const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${(i / (points.length - 1)) * w} ${h - (p / max) * h}`).join(' ');
     const last = points[points.length - 1];
     return (
         <div>
-            <div className="mono-eyebrow" style={{ fontSize: 14, marginBottom: 6 }}>Respuestas · 14 días</div>
+            <div className="mono-eyebrow" style={{ fontSize: 14, marginBottom: 6 }}>{t.dashboard.responses14d}</div>
             <svg viewBox={`0 0 ${w} ${h}`} style={{ display: 'block', width: '100%', height: h }}>
                 <path d={`${path} L ${w} ${h} L 0 ${h} Z`} fill="rgba(167,114,227,0.12)" />
                 <path d={path} stroke="var(--accent-hex)" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -48,7 +49,7 @@ function PageCard({
     page: any; onToggle: () => void; onDelete: () => void; onCopy: () => void;
     openMenuId: string | null; setOpenMenuId: (id: string | null) => void;
 }) {
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
     const total = page.yesCount + page.noCount;
     const yesPct = total ? Math.round((page.yesCount / total) * 100) : 0;
 
@@ -63,7 +64,7 @@ function PageCard({
 
     const isExpired = page.expiresAt ? new Date(page.expiresAt) < new Date() : false;
     const expirationText = page.expiresAt
-        ? isExpired ? t.dashboard.cardExpired : t.dashboard.cardExpires.replace('{time}', getTimeAgo(page.expiresAt))
+        ? isExpired ? t.dashboard.cardExpired : t.dashboard.cardExpires.replace('{time}', getTimeAgo(page.expiresAt, locale))
         : null;
 
     const titleChars = [...(page.title ?? '')];
@@ -111,7 +112,7 @@ function PageCard({
 
             {/* Card body */}
             <div style={{ padding: 20 }}>
-                <div className="mono-eyebrow" style={{ fontSize: 14 }}>para {page.recipientName}</div>
+                <div className="mono-eyebrow" style={{ fontSize: 14 }}>{t.dashboard.forName.replace('{name}', page.recipientName)}</div>
                 <h3 className="serif-display" style={{ fontSize: 22, margin: '6px 0 4px', color: 'var(--ink)', lineHeight: 1.1 }}>
                     {page.title}
                 </h3>
@@ -146,14 +147,14 @@ function PageCard({
                                 <div style={{ width: `${yesPct}%`, background: 'var(--accent-hex)', mixBlendMode: 'multiply' }} />
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 14, color: 'var(--ink-soft)' }}>
-                                <span>{yesPct}% dijeron sí 💖</span>
-                                <span>{getTimeAgo(page.createdAt)}</span>
+                                <span>{t.dashboard.saidYesPct.replace('{pct}', String(yesPct))}</span>
+                                <span>{getTimeAgo(page.createdAt, locale)}</span>
                             </div>
                         </div>
                     </>
                 ) : (
                     <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--rule)', fontSize: 15, color: 'var(--ink-soft)' }}>
-                        {page.isActive ? `${page.views} ${t.dashboard.statsViews} · ${t.dashboard.statsNo}` : `${t.dashboard.noPublished} · ${getTimeAgo(page.createdAt)}`}
+                        {page.isActive ? `${page.views} ${t.dashboard.statsViews} · ${t.dashboard.statsNo}` : `${t.dashboard.noPublished} · ${getTimeAgo(page.createdAt, locale)}`}
                     </div>
                 )}
 
@@ -206,14 +207,15 @@ function LimitModal({ onClose }: { onClose: () => void }) {
 
 // ── New page card ────────────────────────────────────────────
 function NewCard({ onClick }: { onClick: () => void }) {
+    const { t } = useTranslation();
     return (
         <button onClick={onClick} style={{ border: '2px dashed var(--lila-2)', borderRadius: 'var(--r-xl)', background: 'transparent', padding: 0, cursor: 'pointer', fontFamily: 'var(--sans)', color: 'var(--ink)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, minHeight: 380, width: '100%' }}
             className="hover:bg-white/60 transition-colors">
             <div style={{ width: 60, height: 60, borderRadius: 20, background: 'var(--accent-soft)', color: 'var(--accent-hex)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Plus style={{ width: 26, height: 26 }} strokeWidth={2.4} />
             </div>
-            <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 20, color: 'var(--ink)' }}>Nueva carta</div>
-            <div style={{ fontSize: 15, color: 'var(--ink-soft)' }}>En blanco o desde plantilla</div>
+            <div style={{ fontFamily: 'var(--display)', fontWeight: 700, fontSize: 20, color: 'var(--ink)' }}>{t.dashboard.newLetter}</div>
+            <div style={{ fontSize: 15, color: 'var(--ink-soft)' }}>{t.dashboard.newLetterDesc}</div>
         </button>
     );
 }
@@ -294,7 +296,7 @@ export default function DashboardPage() {
                 <main style={{ maxWidth: 640, margin: '0 auto', padding: '80px 24px', textAlign: 'center' }}>
                     <span style={{ fontSize: 64 }}>💌</span>
                     <h1 className="serif-display" style={{ fontSize: 'clamp(28px, 5vw, 48px)', margin: '16px 0 12px', color: 'var(--ink)', lineHeight: 1.12 }}>
-                        <em style={{ color: 'var(--accent-hex)' }}>inicia sesión</em> para ver tus páginas
+                        <em style={{ color: 'var(--accent-hex)' }}>{t.dashboard.loginToSeeEm}</em>{t.dashboard.loginToSeeRest}
                     </h1>
                     <p style={{ color: 'var(--ink-2)', fontSize: 17, lineHeight: 1.55 }}>{t.dashboard.heroDesc}</p>
                     <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 32, flexWrap: 'wrap' }}>
@@ -341,7 +343,7 @@ export default function DashboardPage() {
                 <section style={{ padding: '40px 0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 16 }}>
                     <div>
                         <span className="sticker-badge" style={{ marginBottom: 12 }}>
-                            {greeting}, {user.displayName?.split(' ')[0] ?? 'tú'}
+                            {greeting}, {user.displayName?.split(' ')[0] ?? t.dashboard.you}
                         </span>
                         <h1 className="serif-display" style={{ fontSize: 'clamp(38px, 5vw, 56px)', margin: '12px 0 0', color: 'var(--ink-black)', lineHeight: 1.12 }}>
                             {t.dashboard.yourLetters}
@@ -351,7 +353,7 @@ export default function DashboardPage() {
                     <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                         {/* Filtros — segmentado suave, el activo sube a blanco */}
                         <div style={{ display: 'flex', gap: 4, padding: 4, borderRadius: 'var(--r-pill)', background: 'var(--paper-2)' }}>
-                            {([['all', 'Todas', pages.length], ['active', 'Activas', activeCount], ['draft', 'Borradores', draftCount]] as const).map(([val, label, count]) => (
+                            {([['all', t.dashboard.filterAll, pages.length], ['active', t.dashboard.filterActive, activeCount], ['draft', t.dashboard.filterDrafts, draftCount]] as const).map(([val, label, count]) => (
                                 <button key={val} onClick={() => setFilter(val)}
                                     style={{ padding: '8px 16px', borderRadius: 'var(--r-pill)', background: filter === val ? 'var(--paper-soft)' : 'transparent', color: filter === val ? 'var(--ink-black)' : 'var(--ink-soft)', border: 'none', boxShadow: filter === val ? 'var(--shadow-soft)' : 'none', fontSize: 15, fontWeight: 600, cursor: 'pointer', transition: 'all 140ms' }}>
                                     {label} · {count}
@@ -361,7 +363,7 @@ export default function DashboardPage() {
 
                         <button onClick={handleCreate} className="btn-accent" style={{ padding: '12px 20px', fontSize: 16 }}>
                             <Plus style={{ width: 17, height: 17 }} strokeWidth={2.4} />
-                            Nueva carta
+                            {t.dashboard.newLetter}
                         </button>
                     </div>
                 </section>
@@ -371,10 +373,10 @@ export default function DashboardPage() {
                     {/* Todas las cifras de esta tira salen de `pages`, igual que la
                         lista de abajo. Usar aquí el contador histórico del backend
                         hacía que dijera «7 páginas» junto a «aún no has creado ninguna». */}
-                    <Mini n={pages.length} l="Páginas" />
-                    <Mini n={totalViews} l="Visitas totales" />
-                    <Mini n={totalResponses} l="Respuestas sí" accent />
-                    <Mini n={activeCount} l="Activas" />
+                    <Mini n={pages.length} l={t.dashboard.statPages} />
+                    <Mini n={totalViews} l={t.dashboard.statTotalViews} />
+                    <Mini n={totalResponses} l={t.dashboard.statYesResponses} accent />
+                    <Mini n={activeCount} l={t.dashboard.statActive} />
                     <div className="max-sm:col-span-2" style={{ padding: '16px 24px' }}>
                         <Sparkline points={[3, 7, 4, 12, 18, 11, 22, 28, 18, 24, 31, 29, 38, totalResponses || 1]} />
                     </div>

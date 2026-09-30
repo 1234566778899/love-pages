@@ -262,7 +262,7 @@ export function RewardedAdBanner({
                             <p className="text-xs text-gray-500 mb-2">¿Prefieres no ver anuncios?</p>
                             <a href="/upgrade" className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-600 hover:text-amber-700">
                                 <Crown className="w-4 h-4" />
-                                Pasa a PRO — $9/año, páginas ilimitadas
+                                Pasa a PRO — $3.99/año, páginas ilimitadas
                             </a>
                         </div>
                     </div>

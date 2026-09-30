@@ -5,6 +5,7 @@ import { signInWithPopup, Auth, GoogleAuthProvider } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useTranslation } from '@/i18n';
 
 /**
  * Pide la sesión sin sacar al usuario de donde está.
@@ -28,12 +29,13 @@ export function LoginGateModal({
     description: string;
 }) {
     const [loading, setLoading] = useState(false);
+    const { t } = useTranslation();
 
     if (!isOpen) return null;
 
     const handleGoogleLogin = async () => {
         if (!auth || !googleProvider) {
-            toast.error('Error: Firebase no está inicializado');
+            toast.error(t.auth.firebaseNotInitialized);
             return;
         }
         setLoading(true);
@@ -42,7 +44,7 @@ export function LoginGateModal({
             onSuccess?.();
         } catch (error: any) {
             if (error.code !== 'auth/popup-closed-by-user') {
-                toast.error('No se pudo iniciar sesión. Inténtalo otra vez.');
+                toast.error(t.auth.loginFailedRetry);
             }
             setLoading(false);
         }
@@ -59,7 +61,7 @@ export function LoginGateModal({
                 <button
                     onClick={onClose}
                     disabled={loading}
-                    aria-label="Cerrar"
+                    aria-label={t.auth.close}
                     style={{ position: 'absolute', top: 14, right: 14, width: 32, height: 32, borderRadius: 999, background: 'var(--paper-2)', border: 'none', cursor: loading ? 'not-allowed' : 'pointer', color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 0 }}
                 >
                     <X style={{ width: 16, height: 16 }} />
@@ -69,7 +71,7 @@ export function LoginGateModal({
                     <span
                         className="mono-eyebrow"
                         style={{ color: 'var(--accent-2-hex)', display: 'block', marginBottom: 12 }}
-                    >Último paso
+                    >{t.auth.lastStep}
                     </span>
 
                     <h3
@@ -107,11 +109,11 @@ export function LoginGateModal({
                                 <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                             </svg>
                         )}
-                        {loading ? 'Entrando…' : 'Continuar con Google'}
+                        {loading ? t.auth.signingIn : t.auth.continueWithGoogle}
                     </button>
 
                     <p style={{ marginTop: 14, fontSize: 14, lineHeight: 1.5, color: 'var(--ink-faint)', textAlign: 'center' }}>
-                        Tu carta se queda como está mientras entras.
+                        {t.auth.draftKept}
                     </p>
                 </div>
             </div>

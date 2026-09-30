@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store';
 import { Header } from '@/components/layout/header';
@@ -17,8 +17,13 @@ import {
     DEFAULT_THEME_ID,
     DEFAULT_FONT,
     DEFAULT_COLORS,
+    LETTER_TEXT_HALO,
+    contrastRatio,
 } from '@/lib/page-theme';
 import { useTranslation } from '@/i18n';
+import esT from '@/i18n/translations/es';
+import enT from '@/i18n/translations/en';
+import { fleeDelta } from '@/lib/escape-button';
 
 import {
     Heart,
@@ -51,6 +56,11 @@ import {
     RotateCcw,
     ChevronDown,
     Check,
+    Copy,
+    Share2,
+    MessageCircle,
+    MousePointerClick,
+    ChevronRight,
 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -97,7 +107,7 @@ const THEMES = [
         id: 'romantic',
         name: 'Romántico',
         emoji: '💕',
-        colors: { bg: '#ff69b4', text: '#ffffff', accent: '#ff1493' },
+        colors: { bg: '#d6246e', text: '#ffffff', accent: '#ffc2d9' },
         preview: 'bg-gradient-to-br from-pink-400 to-rose-500',
         free: true,
     },
@@ -105,7 +115,7 @@ const THEMES = [
         id: 'sunset',
         name: 'Atardecer',
         emoji: '🌅',
-        colors: { bg: '#ff6b35', text: '#ffffff', accent: '#f7c59f' },
+        colors: { bg: '#c2410c', text: '#ffffff', accent: '#ffd8a8' },
         preview: 'bg-gradient-to-br from-orange-400 to-pink-500',
         free: true,
     },
@@ -234,6 +244,29 @@ const BACKGROUND_MUSIC = [
     { id: 'orchestra', name: '🎻 Orquesta suave', free: false },
 ];
 
+/**
+ * Cartas de partida por ocasión. El texto vive en las traducciones
+ * (`create.occasionPresets`); aquí sólo el aspecto que acompaña a cada una.
+ * Sólo paletas y animaciones gratis: elegir ocasión no debe meter nada PRO.
+ */
+const OCCASIONS = [
+    { id: 'valentine', theme: DEFAULT_THEME_ID, animation: 'hearts-falling' },
+    { id: 'anniversary', theme: 'elegant', animation: 'fade-in' },
+    { id: 'askOut', theme: 'garden', animation: 'hearts-falling' },
+    { id: 'apology', theme: 'minimal', animation: 'float-up' },
+    { id: 'birthday', theme: 'playful', animation: 'float-up' },
+] as const;
+
+type OccasionId = (typeof OCCASIONS)[number]['id'];
+
+/** «María José» → «maria-jose», para sugerir el enlace a partir del nombre. */
+function slugify(text: string): string {
+    return text
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+        .slice(0, 24);
+}
+
 // ============================================================
 // TIPOS
 // ============================================================
@@ -361,6 +394,7 @@ function ProDecisionModal({
     onUpgrade: () => void;
     selections: { label: string; value: string }[];
 }) {
+    const { t } = useTranslation();
     if (!isOpen) return null;
 
     return (
@@ -372,15 +406,15 @@ function ProDecisionModal({
                 style={{ background: 'var(--paper-soft)', border: '1px solid var(--hairline)', boxShadow: 'var(--shadow-card)' }}
             >
                 <div style={{ padding: '28px 26px 26px' }}>
-                    <span className="mono-eyebrow" style={{ fontSize: 14, letterSpacing: 0, color: 'var(--accent-hex)', display: 'block', marginBottom: 12 }}>{selections.length === 1 ? 'una cosa es PRO' : `${selections.length} cosas son PRO`}
+                    <span className="mono-eyebrow" style={{ fontSize: 14, letterSpacing: 0, color: 'var(--accent-hex)', display: 'block', marginBottom: 12 }}>{selections.length === 1 ? t.create.proModalOne : t.create.proModalMany.replace('{count}', String(selections.length))}
                     </span>
 
                     <h3 className="serif-display" style={{ fontSize: 28, lineHeight: 1.12, margin: 0, color: 'var(--ink-black)' }}>
-                        Casi listo.
+                        {t.create.proModalTitle}
                     </h3>
 
                     <p style={{ marginTop: 12, fontFamily: 'var(--serif)', fontSize: 15, lineHeight: 1.5, color: 'var(--ink-black)' }}>
-                        Esto es lo que estabas probando y no entra en el plan gratis:
+                        {t.create.proModalDesc}
                     </p>
 
                     <ul style={{ listStyle: 'none', padding: 0, margin: '16px 0 0', display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -402,19 +436,19 @@ function ProDecisionModal({
                             style={{ width: '100%', padding: '13px 18px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: 'var(--mono)', letterSpacing: 0 }}
                         >
                             <Crown style={{ width: 14, height: 14 }} />
-                            Desbloquearlas · $9/año
+                            {t.create.unlockThemPrice}
                         </button>
                         <button
                             onClick={onPublishFree}
                             style={{ width: '100%', padding: '11px 18px', background: 'transparent', border: '1px solid var(--hairline)', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: 14, letterSpacing: 0, textTransform: 'none', color: 'var(--ink-black)' }}
                         >
-                            Publicar sin ellas
+                            {t.create.proModalPublishFree}
                         </button>
                         <button
                             onClick={onClose}
                             style={{ width: '100%', padding: '4px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--mono)', fontSize: 14, color: 'var(--ink-soft)', letterSpacing: 0 }}
                         >
-                            seguir editando
+                            {t.create.proModalKeepEditing}
                         </button>
                     </div>
                 </div>
@@ -429,9 +463,9 @@ function ProDecisionModal({
 
 /** Tamaños del lienzo de vista previa (columna izquierda del editor desktop). */
 const PREVIEW_DEVICES = [
-    { id: 'phone', label: 'iPhone 15', icon: Smartphone, width: 320, height: 640, radius: 44, notch: true },
-    { id: 'tablet', label: 'Tablet', icon: Tablet, width: 480, height: 660, radius: 24, notch: false },
-    { id: 'wide', label: 'Escritorio', icon: Monitor, width: 720, height: 460, radius: 8, notch: false },
+    { id: 'phone', labelKey: 'devicePhone', icon: Smartphone, width: 320, height: 640, radius: 44, notch: true },
+    { id: 'tablet', labelKey: 'deviceTablet', icon: Tablet, width: 480, height: 660, radius: 24, notch: false },
+    { id: 'wide', labelKey: 'deviceDesktop', icon: Monitor, width: 720, height: 460, radius: 8, notch: false },
 ] as const;
 
 type PreviewDeviceId = (typeof PREVIEW_DEVICES)[number]['id'];
@@ -483,6 +517,56 @@ function RequiredMark({ filled, label }: { filled: boolean; label: string }) {
 
 const colorKeyMap = { bg: 'backgroundColor', text: 'textColor', accent: 'accentColor' } as const;
 
+/**
+ * El «No» de la vista previa. Si está activado que escape, huye de verdad
+ * dentro de la carta, para que se pueda probar antes de publicar; si no, un
+ * clic lleva a su campo como el resto de textos de la carta.
+ */
+function PreviewNoButton({ label, escapes, onEdit }: { label: string; escapes: boolean; onEdit: () => void }) {
+    const ref = useRef<HTMLButtonElement>(null);
+    const posRef = useRef({ x: 0, y: 0 });
+    const [pos, setPos] = useState({ x: 0, y: 0 });
+
+    useEffect(() => {
+        if (!escapes) { posRef.current = { x: 0, y: 0 }; setPos({ x: 0, y: 0 }); }
+    }, [escapes]);
+
+    const flee = (pointerX: number, pointerY: number) => {
+        const btn = ref.current;
+        const box = btn?.closest('[data-preview-body]') as HTMLElement | null;
+        if (!escapes || !btn || !box) return;
+        const r = btn.getBoundingClientRect();
+        const c = box.getBoundingClientRect();
+        const delta = fleeDelta({
+            btn: { left: r.left, top: r.top, width: r.width, height: r.height },
+            container: c, viewport: c, pointerX, pointerY, force: true, margin: 8,
+        });
+        if (!delta) return;
+        posRef.current = { x: posRef.current.x + delta.dx, y: posRef.current.y + delta.dy };
+        setPos(posRef.current);
+    };
+
+    return (
+        <button
+            ref={ref}
+            type="button"
+            className={escapes ? undefined : 'lp-editable'}
+            onMouseEnter={(e) => flee(e.clientX, e.clientY)}
+            onPointerDown={(e) => { if (e.pointerType !== 'mouse') flee(e.clientX, e.clientY); }}
+            onClick={() => { if (!escapes) onEdit(); }}
+            style={{
+                fontSize: 14, padding: '10px 20px', cursor: escapes ? 'default' : 'text',
+                background: 'var(--paper-2)', border: 'none', borderRadius: 'var(--r-md)',
+                color: 'var(--ink-black)', fontFamily: 'var(--sans)', fontWeight: 600, whiteSpace: 'nowrap',
+                transform: `translate(${pos.x}px, ${pos.y}px)`, transition: 'transform 220ms cubic-bezier(.2,.8,.2,1)',
+                position: 'relative', zIndex: 4,
+            }}
+        >
+            {label}
+        </button>
+    );
+}
+
 function renderMsg(text: string): React.ReactNode {
     if (!text || !text.includes('*')) return text;
     return text.split(/(\*[^*]+\*)/g).map((part, i) =>
@@ -499,8 +583,12 @@ export default function CreatePageEnhanced() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuthStore();
     const [currentStep, setCurrentStep] = useState<Step>('content');
-    /** Sección opcional abierta. `null` = todas plegadas, que es el arranque. */
-    const [openSection, setOpenSection] = useState<Exclude<Step, 'content'> | null>(null);
+    /**
+     * Pestaña de «Personalizar» abierta. Antes eran acordeones plegados y las
+     * opciones pasaban desapercibidas; ahora siempre hay una a la vista.
+     */
+    const [openSection, setOpenSection] = useState<Exclude<Step, 'content'>>('design');
+    const tabsRef = useRef<HTMLDivElement>(null);
     /** Vista previa a pantalla completa. Sólo se usa por debajo de `lg`. */
     const [showPreview, setShowPreview] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -518,7 +606,11 @@ export default function CreatePageEnhanced() {
      * se está escribiendo, así que mientras se escribe la maqueta se pliega y
      * la barra de publicar se aparta.
      */
-    const { t } = useTranslation();
+    const { t, locale } = useTranslation();
+    /** Hay un campo de texto enfocado: en móvil el botón «Ver mi carta» se aparta. */
+    const [typing, setTyping] = useState(false);
+    /** Carta recién publicada: se ofrece compartirla antes de salir del editor. */
+    const [published, setPublished] = useState<{ url: string; identifier: string } | null>(null);
 
     // ── Borrador ──
     const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -536,6 +628,9 @@ export default function CreatePageEnhanced() {
     const [invalidField, setInvalidField] = useState<'title' | 'recipientName' | null>(null);
     const titleRef = useRef<HTMLInputElement>(null);
     const recipientRef = useRef<HTMLInputElement>(null);
+    const messageRef = useRef<HTMLTextAreaElement>(null);
+    const yesRef = useRef<HTMLInputElement>(null);
+    const noRef = useRef<HTMLInputElement>(null);
 
     // ── Lienzo ──
     const [previewDevice, setPreviewDevice] = useState<PreviewDeviceId>('phone');
@@ -641,6 +736,121 @@ export default function CreatePageEnhanced() {
         setCurrentStep('content');
         toast.success(t.create.draftDiscarded);
     };
+
+    // ── Ocasión ─────────────────────────────────────────────
+    const presets = t.create.occasionPresets;
+
+    /** La ocasión cuya carta de partida sigue intacta en el formulario. */
+    const activeOccasion = (Object.keys(presets) as OccasionId[]).find(
+        (id) => presets[id].title === formData.title && presets[id].message === formData.message
+    ) ?? null;
+    const isBlank = !formData.title.trim() && !formData.message.trim();
+
+    const applyOccasion = (id: OccasionId) => {
+        const previous = formData;
+        const preset = presets[id];
+        const meta = OCCASIONS.find((o) => o.id === id)!;
+        const theme = THEMES.find((th) => th.id === meta.theme) ?? THEMES[0];
+        setFormData((prev) => ({
+            ...prev,
+            title: preset.title, message: preset.message,
+            yesButtonText: preset.yes, noButtonText: preset.no,
+            theme: theme.id, backgroundColor: theme.colors.bg, textColor: theme.colors.text, accentColor: theme.colors.accent,
+            animation: meta.animation,
+        }));
+        setShowStarter(false);
+        // Pisa texto y estilo: se puede deshacer de un toque.
+        toast(
+            (tt) => (
+                <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {t.create.occasionApplied.replace('{occasion}', preset.label)}
+                    <button
+                        onClick={() => { setFormData(previous); toast.dismiss(tt.id); }}
+                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--accent-2-hex)', fontWeight: 700 }}
+                    >
+                        {t.create.undo}
+                    </button>
+                </span>
+            ),
+            { id: 'occasion', duration: 5000 }
+        );
+    };
+
+    const startBlank = () => {
+        updateForm({ title: '', message: '' });
+        setShowStarter(false);
+        requestAnimationFrame(() => titleRef.current?.focus());
+    };
+
+    // La carta de ejemplo se crea en el primer render, antes de saber el
+    // idioma guardado. Si sigue intacta en el otro idioma, se traduce.
+    useEffect(() => {
+        const other = (locale === 'en' ? esT : enT).create.occasionPresets;
+        setFormData((prev) => {
+            const id = (Object.keys(other) as OccasionId[]).find(
+                (k) => other[k].title === prev.title && other[k].message === prev.message
+            );
+            if (!id) return prev;
+            const cur = presets[id];
+            return {
+                ...prev,
+                title: cur.title, message: cur.message,
+                yesButtonText: prev.yesButtonText === other[id].yes ? cur.yes : prev.yesButtonText,
+                noButtonText: prev.noButtonText === other[id].no ? cur.no : prev.noButtonText,
+            };
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [locale]);
+
+    // ── Editar desde la carta ───────────────────────────────
+    const fieldRefs = { title: titleRef, recipientName: recipientRef, message: messageRef, yes: yesRef, no: noRef };
+    /** Clic en un texto de la vista previa: lleva a su campo y lo resalta. */
+    const editField = (key: keyof typeof fieldRefs) => {
+        setShowPreview(false);
+        requestAnimationFrame(() => {
+            const el = fieldRefs[key].current;
+            if (!el) return;
+            el.focus({ preventScroll: true });
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            // Los campos cortos se seleccionan para reescribirlos de una vez;
+            // el mensaje no, que un toque de más lo borraría entero.
+            if (key === 'message') el.setSelectionRange(el.value.length, el.value.length);
+            else el.select();
+        });
+    };
+
+    // El mensaje crece con el texto en vez de quedar cortado en una caja.
+    useLayoutEffect(() => {
+        const el = messageRef.current;
+        if (!el) return;
+        el.style.height = 'auto';
+        el.style.height = `${Math.min(el.scrollHeight + 2, 420)}px`;
+    }, [formData.message]);
+
+    // ── Enlace ──────────────────────────────────────────────
+    const suggestedSlug = formData.recipientName.trim()
+        ? `${t.customSlug.slugPrefix}-${slugify(formData.recipientName)}`
+        : t.customSlug.defaultSlug;
+
+    // La tira de estilos desplaza: el tema elegido (por ocasión o borrador)
+    // podía quedar fuera de la vista y no se sabía cuál estaba activo.
+    const styleStripRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const box = styleStripRef.current;
+        const el = box?.querySelector<HTMLElement>('[aria-pressed="true"]');
+        if (!box || !el) return;
+        box.scrollTo({ left: el.offsetLeft - box.clientWidth / 2 + el.clientWidth / 2, behavior: 'smooth' });
+    }, [formData.theme]);
+
+    const openTab = (id: Exclude<Step, 'content'>) => {
+        setShowPreview(false);
+        setOpenSection(id);
+        requestAnimationFrame(() => tabsRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+    };
+
+    const isTextInput = (el: EventTarget) =>
+        el instanceof HTMLTextAreaElement ||
+        (el instanceof HTMLInputElement && ['text', 'url', 'search', 'email', ''].includes(el.type));
 
     // Auth no requerido - usuarios pueden diseñar sin login
     // Se pedirá login al momento de guardar si no están autenticados
@@ -932,9 +1142,10 @@ export default function CreatePageEnhanced() {
             // La página ya vive en el servidor: el borrador local sobra y, si se
             // quedara, reaparecería la próxima vez que alguien abra el editor.
             clearDraft();
-            toast.success(t.create.pageCreated);
             const identifier = response.data.data.customSlug || response.data.data.shortId;
-            router.push(`/p/${identifier}`);
+            // Antes se saltaba directo a la carta publicada. Ahora se ofrece
+            // mandarla, que es lo siguiente que va a querer hacer.
+            setPublished({ identifier, url: `${window.location.origin}/p/${identifier}` });
         } catch (error: any) {
             console.error('Error creating page:', error);
             toast.error(error.response?.data?.message || t.create.createError);
@@ -1014,6 +1225,29 @@ export default function CreatePageEnhanced() {
     // y un spinner entre la landing y el editor. Ahora pinta de inmediato y
     // los datos de la cuenta (isPro, límite) llegan cuando llegan.
 
+    // ---- Compartir ----
+    const shareText = published
+        ? t.create.shareMessage.replace('{name}', formData.recipientName.trim()).replace('{url}', published.url)
+        : '';
+    const copyPublished = async () => {
+        if (!published) return;
+        try {
+            await navigator.clipboard.writeText(published.url);
+            toast.success(t.create.shareCopied);
+        } catch {
+            toast.error(t.create.createError);
+        }
+    };
+    const nativeShare = async () => {
+        if (!published) return;
+        try {
+            await navigator.share({ title: formData.title, text: shareText, url: published.url });
+        } catch {
+            // Cancelado por el usuario: no es un error.
+        }
+    };
+    const canNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
     // ---- Steps config ----
     const steps: { key: Step; label: string; icon: React.ReactNode }[] = [
         { key: 'content', label: t.create.stepContent, icon: <Type className="w-4 h-4" /> },
@@ -1084,20 +1318,53 @@ export default function CreatePageEnhanced() {
                     />
                 </DField>
                 <DField label={t.create.fieldMessage} hint={`${formData.message.length}/1000`}>
-                    <textarea value={formData.message} onChange={e => updateForm({ message: e.target.value })} placeholder={t.create.messagePlaceholder} maxLength={1000} rows={5} style={{ ...dI, resize: 'none', lineHeight: 1.5 }} />
+                    <textarea ref={messageRef} value={formData.message} onChange={e => updateForm({ message: e.target.value })} placeholder={t.create.messagePlaceholder} maxLength={1000} rows={5} style={{ ...dI, resize: 'none', lineHeight: 1.5, overflowY: 'auto', minHeight: 140 }} />
                 </DField>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                     <DField label={t.create.fieldYesBtn}>
-                        <input value={formData.yesButtonText} onChange={e => updateForm({ yesButtonText: e.target.value })} maxLength={50} style={dI} />
+                        <input ref={yesRef} value={formData.yesButtonText} onChange={e => updateForm({ yesButtonText: e.target.value })} maxLength={50} style={dI} />
                     </DField>
                     <DField label={t.create.fieldNoBtn}>
-                        <input value={formData.noButtonText} onChange={e => updateForm({ noButtonText: e.target.value })} maxLength={50} style={dI} />
+                        <input ref={noRef} value={formData.noButtonText} onChange={e => updateForm({ noButtonText: e.target.value })} maxLength={50} style={dI} />
                     </DField>
                 </div>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--paper)', border: '1px solid var(--hairline)', cursor: 'pointer', fontSize: 14, fontFamily: 'var(--mono)', letterSpacing: 0 }}>
-                    <input type="checkbox" checked={formData.noButtonEscapes} onChange={e => updateForm({ noButtonEscapes: e.target.checked })} style={{ width: 16, height: 16, accentColor: 'var(--accent-hex)' }} />
-                    {t.create.noEscapes}
-                </label>
+                {/* El «No» que escapa es la gracia del producto: se elige como una
+                    opción con nombre, no escondido en una casilla. */}
+                <DField label={t.create.noBehaviorLabel}>
+                    <div role="radiogroup" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        {([
+                            [false, '🙂', t.create.noBehaviorStay, t.create.noBehaviorStayDesc],
+                            [true, '🏃', t.create.noBehaviorEscape, t.create.noBehaviorEscapeDesc],
+                        ] as const).map(([value, emoji, title, desc]) => {
+                            const active = formData.noButtonEscapes === value;
+                            return (
+                                <button
+                                    key={String(value)}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={active}
+                                    onClick={() => updateForm({ noButtonEscapes: value })}
+                                    style={{
+                                        textAlign: 'left', padding: '12px 14px', borderRadius: 'var(--r-md)', cursor: 'pointer',
+                                        background: active ? 'var(--accent-soft)' : 'var(--paper-2)',
+                                        border: active ? '2px solid var(--accent-hex)' : '2px solid transparent',
+                                        display: 'flex', flexDirection: 'column', gap: 2,
+                                    }}
+                                >
+                                    <span style={{ fontSize: 20, lineHeight: 1.2 }}>{emoji}</span>
+                                    <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--ink-black)' }}>{title}</span>
+                                    <span style={{ fontSize: 14, color: 'var(--ink-soft)', lineHeight: 1.35 }}>{desc}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                    {formData.noButtonEscapes && (
+                        <p style={{ margin: '8px 0 0', fontSize: 14, color: 'var(--accent-2-hex)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <MousePointerClick style={{ width: 14, height: 14, flexShrink: 0 }} />
+                            {t.create.noBehaviorTry}
+                        </p>
+                    )}
+                </DField>
                 {isPro && (
                     <div style={{ borderTop: '1px solid var(--rule)', paddingTop: 16 }}>
                         <CustomSlugInput value={formData.customSlug} onChange={v => updateForm({ customSlug: v })} isPro={isPro} onUpgrade={goToUpgrade} recipientName={formData.recipientName} />
@@ -1114,32 +1381,65 @@ export default function CreatePageEnhanced() {
                 )}
     </>);
 
-    const themeFields = () => (<>
-                <DField label={t.create.fieldPalette}>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-                        {THEMES.map(theme => (
-                            <div key={theme.id} style={{ position: 'relative' }}>
-                                <button
-                                    onClick={() => selectTheme(theme)}
-                                    style={{
-                                        width: '100%', padding: 10,
-                                        border: formData.theme === theme.id ? '2px solid var(--accent-hex)' : '1px solid var(--hairline)',
-                                        background: 'var(--paper)', cursor: 'pointer',
-                                        display: 'flex', alignItems: 'center', gap: 8,
-                                        textAlign: 'left',
-                                    }}
-                                >
-                                    <span style={{ display: 'flex', flexShrink: 0 }}>
-                                        <span style={{ width: 18, height: 18, background: theme.colors.bg, border: '1px solid var(--hairline)' }} />
-                                        <span style={{ width: 18, height: 18, background: theme.colors.accent, border: '1px solid var(--hairline)', borderLeft: 'none', mixBlendMode: 'multiply' }} />
-                                    </span>
-                                    <span style={{ fontSize: 14, fontFamily: 'var(--mono)', textTransform: 'none', letterSpacing: 0 }}>{t.themes[theme.id as keyof typeof t.themes] || theme.name}</span>
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </DField>
+    /**
+     * Paletas a la vista, justo después de lo obligatorio. Antes vivían dentro
+     * de un acordeón plegado y había quien no sabía que se podía cambiar el
+     * color de la carta.
+     */
+    const styleStrip = () => (
+        <DField
+            label={t.create.quickStyleLabel}
+            hint={
+                <button
+                    type="button"
+                    onClick={() => openTab('design')}
+                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--accent-2-hex)', fontWeight: 600, fontSize: 14, display: 'inline-flex', alignItems: 'center', gap: 2 }}
+                >
+                    {t.create.quickStyleMore}
+                    <ChevronRight style={{ width: 14, height: 14 }} />
+                </button>
+            }
+        >
+            <div ref={styleStripRef} style={{ position: 'relative', display: 'flex', gap: 12, overflowX: 'auto', padding: '4px 2px 6px', margin: '0 -2px' }}>
+                {THEMES.map((theme) => {
+                    const active = formData.theme === theme.id;
+                    const name = t.themes[theme.id as keyof typeof t.themes] || theme.name;
+                    return (
+                        <button
+                            key={theme.id}
+                            type="button"
+                            onClick={() => selectTheme(theme)}
+                            aria-pressed={active}
+                            title={name}
+                            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, flexShrink: 0, width: 58 }}
+                        >
+                            <span
+                                style={{
+                                    position: 'relative', width: 46, height: 46, borderRadius: 999,
+                                    background: `linear-gradient(135deg, ${theme.colors.bg} 50%, ${theme.colors.accent} 50%)`,
+                                    border: '1px solid var(--rule)',
+                                    boxShadow: active ? '0 0 0 2px var(--paper-soft), 0 0 0 4px var(--accent-hex)' : 'none',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: theme.colors.text, fontSize: 15, fontWeight: 700,
+                                }}
+                            >
+                                Aa
+                                {!theme.free && !isPro && (
+                                    <Crown style={{ position: 'absolute', top: -3, right: -3, width: 16, height: 16, padding: 2, borderRadius: 999, background: 'var(--ink-black)', color: 'var(--paper)' }} />
+                                )}
+                            </span>
+                            <span style={{ fontSize: 13, lineHeight: 1.2, color: active ? 'var(--ink-black)' : 'var(--ink-soft)', fontWeight: active ? 700 : 500, textAlign: 'center' }}>{name}</span>
+                        </button>
+                    );
+                })}
+            </div>
+        </DField>
+    );
 
+    const textContrast = contrastRatio(formData.textColor, formData.backgroundColor);
+    const readableText = contrastRatio('#1b1721', formData.backgroundColor) >= contrastRatio('#ffffff', formData.backgroundColor) ? '#1b1721' : '#ffffff';
+
+    const themeFields = () => (<>
                 <DField label={t.create.fieldColors}>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                         {(['bg', 'text', 'accent'] as const).map(ct => {
@@ -1167,6 +1467,21 @@ export default function CreatePageEnhanced() {
                             );
                         })}
                     </div>
+                    {/* El título usa el color elegido tal cual: si no se lee, se
+                        avisa y se ofrece arreglarlo, en vez de cambiarlo a escondidas. */}
+                    {textContrast < 4.5 && (
+                        <div role="alert" style={{ marginTop: 10, padding: '10px 12px', borderRadius: 'var(--r-md)', background: 'var(--destructive-soft)', border: '1px solid var(--destructive-border)', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', fontSize: 14, color: 'var(--ink-black)' }}>
+                            <AlertCircle style={{ width: 15, height: 15, flexShrink: 0, color: 'var(--destructive-hex)' }} />
+                            <span style={{ flex: 1, minWidth: 160 }}>{t.create.lowContrast.replace('{ratio}', textContrast.toFixed(1))}</span>
+                            <button
+                                type="button"
+                                onClick={() => updateForm({ textColor: readableText })}
+                                style={{ border: 'none', borderRadius: 999, padding: '6px 12px', background: readableText, color: formData.backgroundColor, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+                            >
+                                {t.create.lowContrastFix}
+                            </button>
+                        </div>
+                    )}
                 </DField>
 
                 <DField label={t.create.fieldFont}>
@@ -1267,7 +1582,7 @@ export default function CreatePageEnhanced() {
                                     }}
                                 >
                                     <span style={{ fontSize: 22, color: 'var(--accent-hex)' }}>{anim.emoji}</span>
-                                    <span className="mono-eyebrow" style={{ fontSize: 15, color: 'var(--ink-soft)' }}>{anim.id}</span>
+                                    <span className="mono-eyebrow" style={{ fontSize: 13, lineHeight: 1.15, textAlign: 'center', padding: '0 4px', color: 'var(--ink-soft)' }}>{t.animations[anim.id as keyof typeof t.animations] || anim.name}</span>
                                 </button>
                             </div>
                         ))}
@@ -1322,7 +1637,7 @@ export default function CreatePageEnhanced() {
                                 updateForm({ customSlug: e.target.value });
                             }}
                             style={{ ...dI, border: 'none', flex: 1, color: 'var(--accent-hex)' }}
-                            placeholder={formData.recipientName ? `para-${formData.recipientName.toLowerCase()}` : 'tu-slug-aqui'}
+                            placeholder={formData.recipientName.trim() ? suggestedSlug : t.create.slugPlaceholder}
                         />
                     </div>
                 </DField>
@@ -1483,7 +1798,7 @@ export default function CreatePageEnhanced() {
                 {/* Partículas — mismo componente que la página publicada, para que
                     lo que se elige aquí sea exactamente lo que se va a ver. */}
                 {hasParticles(formData.animation) && (
-                    <ParticleCanvas kind={animToKind(formData.animation)} density={0.55} />
+                    <ParticleCanvas kind={animToKind(formData.animation)} density={0.4} />
                 )}
                 {/* Halo del acento: sustituye a los dos círculos de tinta
                     superpuesta, que sólo tenían sentido en la estética riso. */}
@@ -1511,11 +1826,15 @@ export default function CreatePageEnhanced() {
                     cabe: con `justify-content: center` a secas, un mensaje largo
                     se salía por arriba y por abajo del marco. `margin: auto` en
                     el hijo hace las dos cosas sin romper el scroll. */}
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', overflowY: 'auto', zIndex: 3 }}>
+                <div data-preview-body style={{ position: 'absolute', inset: 0, display: 'flex', overflowY: 'auto', zIndex: 3 }}>
                     <div style={{ margin: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 20px 92px', textAlign: 'center', width: '100%' }}>
                     {/* Eyebrow */}
                     <div style={{ marginBottom: 16 }}>
-                        <span style={{ display: 'inline-block', padding: '6px 14px', borderRadius: 999, background: 'var(--melocoton)', color: 'var(--ink-red-ink)', fontSize: 13, fontWeight: 600 }}>
+                        <span
+                            className="lp-editable"
+                            onClick={() => editField('recipientName')}
+                            style={{ display: 'inline-block', padding: '6px 14px', borderRadius: 999, background: 'var(--melocoton)', color: 'var(--ink-red-ink)', fontSize: 13, fontWeight: 600 }}
+                        >
                             {t.create.previewForLabel} {recipient}
                         </span>
                     </div>
@@ -1525,6 +1844,8 @@ export default function CreatePageEnhanced() {
                         {stk[0] && <span style={{ position: 'absolute', left: -22, top: 4, fontSize: 18, color: 'var(--accent-hex)', transform: 'rotate(-18deg)' }}>{stk[0]}</span>}
                         {stk[1] && <span style={{ position: 'absolute', right: -18, top: -8, fontSize: 16, color: 'var(--ink-black)', transform: 'rotate(14deg)' }}>{stk[1]}</span>}
                         <h1
+                            className="lp-editable"
+                            onClick={() => editField('title')}
                             style={{
                                 fontFamily: titleFontFamily(formData.titleFont),
                                 fontWeight: 700,
@@ -1532,6 +1853,7 @@ export default function CreatePageEnhanced() {
                                 letterSpacing: '-0.025em',
                                 color: 'var(--ink-black)',
                                 fontSize: 40, margin: 0, maxWidth: 260,
+                                textShadow: LETTER_TEXT_HALO,
                             }}
                         >
                             {formData.title || t.create.previewDefaultTitle}
@@ -1539,7 +1861,11 @@ export default function CreatePageEnhanced() {
                     </div>
 
                     {/* Message */}
-                    <div style={{ marginTop: 16, fontFamily: bodyFontFamily(formData.bodyFont), fontSize: 15, color: 'var(--ink-soft)', maxWidth: 240, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                    <div
+                        className="lp-editable"
+                        onClick={() => editField('message')}
+                        style={{ marginTop: 16, fontFamily: bodyFontFamily(formData.bodyFont), fontSize: 15, color: 'var(--ink-soft)', maxWidth: 240, lineHeight: 1.6, whiteSpace: 'pre-wrap', textShadow: LETTER_TEXT_HALO }}
+                    >
                         {formData.message ? renderMsg(formData.message) : t.create.previewMessagePlaceholder}
                     </div>
 
@@ -1560,30 +1886,58 @@ export default function CreatePageEnhanced() {
                     </div>
 
                     {/* CTA */}
-                    <div style={{ marginTop: 28, display: 'flex', gap: 12, alignItems: 'center' }}>
-                        <button className="btn-accent" style={{ fontSize: 14, padding: '8px 18px', cursor: 'default' }}>
-                            {formData.yesButtonText || '¡Sí!'}
+                    {/* Sin partir el texto de los botones: si no caben juntos,
+                        uno baja debajo del otro. */}
+                    <div style={{ marginTop: 28, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 12, alignItems: 'center' }}>
+                        <button
+                            type="button"
+                            className="btn-accent lp-editable"
+                            onClick={() => editField('yes')}
+                            style={{ fontSize: 14, padding: '10px 20px', cursor: 'text', whiteSpace: 'nowrap' }}
+                        >
+                            {formData.yesButtonText || t.common.yes}
                         </button>
-                        <button style={{
-                            fontSize: 14, padding: '10px 20px', cursor: 'default',
-                            background: 'var(--paper-2)', border: 'none', borderRadius: 'var(--r-md)',
-                            color: 'var(--ink-black)', fontFamily: 'var(--sans)',
-                            fontWeight: 600,
-                        }}>
-                            {formData.noButtonText || 'No'}
-                        </button>
+                        <PreviewNoButton
+                            label={formData.noButtonText || t.common.no}
+                            escapes={formData.noButtonEscapes}
+                            onEdit={() => editField('no')}
+                        />
                     </div>
                     </div>
-                </div>
-
-                {/* Footer — absolute bottom */}
-                <div style={{ position: 'absolute', bottom: 14, left: 18, right: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: 'var(--ink-soft)', zIndex: 4 }}>
-                    <span>{t.create.previewFooter}</span>
-                    <span>lovepages · mx</span>
                 </div>
             </div>
         );
     };
+
+    /**
+     * El enlace que se va a mandar. Sin URL personalizada es un código
+     * aleatorio que no existe hasta publicar, así que se dice eso en vez de
+     * enseñar un «—» y un botón de copiar que copiaba un enlace roto.
+     */
+    const linkPill = () => (
+        <div style={{ display: 'inline-flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 8, padding: '8px 10px 8px 16px', borderRadius: 'var(--r-pill)', background: 'var(--paper-soft)', boxShadow: 'var(--shadow-soft)', fontSize: 14 }}>
+            <span style={{ color: 'var(--ink-soft)' }}>{t.create.linkPillLabel}</span>
+            <span style={{ color: 'var(--ink-faint)' }}>
+                lovepages.ink/p/
+                {formData.customSlug.trim()
+                    ? <span style={{ color: 'var(--accent-2-hex)', fontWeight: 600 }}>{formData.customSlug.trim()}</span>
+                    : <em style={{ fontStyle: 'normal' }}>… ({t.create.linkRandom})</em>}
+            </span>
+            {!formData.customSlug.trim() && (
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (isPro) updateForm({ customSlug: suggestedSlug });
+                        openTab('preview');
+                    }}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 10px', border: 'none', borderRadius: 'var(--r-pill)', background: 'var(--accent-soft)', color: 'var(--accent-2-hex)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+                >
+                    {!isPro && <Crown style={{ width: 12, height: 12 }} />}
+                    {isPro ? `/p/${suggestedSlug}` : t.create.linkProHint.replace('{slug}', suggestedSlug)}
+                </button>
+            )}
+        </div>
+    );
 
     // ── Render ───────────────────────────────────────────────────
     return (
@@ -1671,16 +2025,6 @@ export default function CreatePageEnhanced() {
                         </span>
                     )}
 
-                    {/* En escritorio la carta está al lado; aquí sobraría. */}
-                    <button
-                        onClick={() => setShowPreview(true)}
-                        className="btn-ink lg:hidden"
-                        style={{ padding: '10px 16px', fontSize: 15 }}
-                    >
-                        <Eye style={{ width: 16, height: 16 }} />
-                        <span className="hidden sm:inline">{t.create.previewBtn}</span>
-                    </button>
-
                     <button
                         onClick={handleSubmit}
                         disabled={loading || freeLimitReached}
@@ -1700,13 +2044,17 @@ export default function CreatePageEnhanced() {
                     campos convivan. En móvil la maqueta encogida sobre el
                     formulario no se leía: allí se abre a pantalla completa. */}
                 <main
-                    className="relative hidden lg:flex lg:h-full lg:p-8"
-                    style={{ background: 'var(--paper)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+                    className="relative hidden lg:flex lg:h-full lg:p-7"
+                    style={{ background: 'var(--paper)', flexDirection: 'column', alignItems: 'center', gap: 18, overflow: 'hidden' }}
                 >
+                    {/* Controles arriba, carta en medio y enlace debajo, en flujo:
+                        como capas absolutas se montaban sobre el marco en
+                        pantallas bajas. */}
+                    <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap', flexShrink: 0 }}>
                     <div
                         role="group"
                         aria-label={t.create.canvasDevice}
-                        style={{ position: 'absolute', top: 28, left: 28, display: 'flex', gap: 6, padding: 5, borderRadius: 'var(--r-pill)', background: 'var(--paper-2)', zIndex: 2 }}
+                        style={{ display: 'flex', gap: 6, padding: 5, borderRadius: 'var(--r-pill)', background: 'var(--paper-2)' }}
                     >
                         {PREVIEW_DEVICES.map((device) => {
                             const Icon = device.icon;
@@ -1715,10 +2063,9 @@ export default function CreatePageEnhanced() {
                                 <button
                                     key={device.id}
                                     onClick={() => setPreviewDevice(device.id)}
-                                    title={device.label}
                                     aria-pressed={active}
                                     style={{
-                                        width: 34, height: 34, border: 'none', borderRadius: 999,
+                                        height: 34, padding: '0 12px', gap: 6, fontSize: 14, fontWeight: 600, border: 'none', borderRadius: 999,
                                         background: active ? 'var(--paper-soft)' : 'transparent',
                                         boxShadow: active ? 'var(--shadow-soft)' : 'none',
                                         color: active ? 'var(--accent-2-hex)' : 'var(--ink-soft)',
@@ -1727,19 +2074,25 @@ export default function CreatePageEnhanced() {
                                     }}
                                 >
                                     <Icon style={{ width: 16, height: 16 }} />
+                                    {t.create[device.labelKey]}
                                 </button>
                             );
                         })}
                     </div>
 
-                    {previewFrame()}
+                    {/* Pista: la carta también es un control */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 'var(--r-pill)', background: 'var(--paper-2)', color: 'var(--ink-soft)', fontSize: 14 }}>
+                        <MousePointerClick style={{ width: 14, height: 14 }} />
+                        {t.create.previewEditHint}
+                    </div>
+                    </div>
+
+                    <div style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {previewFrame()}
+                    </div>
 
                     {/* Enlace que se va a compartir */}
-                    <div style={{ position: 'absolute', bottom: 28, left: 28, display: 'flex', padding: '9px 16px', borderRadius: 'var(--r-pill)', background: 'var(--paper-soft)', boxShadow: 'var(--shadow-soft)', fontSize: 14, alignItems: 'center', gap: 6, zIndex: 2 }}>
-                        <span style={{ color: 'var(--ink-faint)' }}>lovepages.ink/p/</span>
-                        <span style={{ color: 'var(--accent-2-hex)', fontWeight: 600 }}>{formData.customSlug || '—'}</span>
-                        <span style={{ marginLeft: 4, cursor: 'pointer' }} onClick={() => typeof window !== 'undefined' && navigator.clipboard.writeText(`${window.location.origin}/p/${formData.customSlug}`)}>📋</span>
-                    </div>
+                    <div style={{ flexShrink: 0 }}>{linkPill()}</div>
                 </main>
 
                 {/* ── Formulario ── */}
@@ -1749,15 +2102,22 @@ export default function CreatePageEnhanced() {
                 >
                     <div
                         style={{ width: '100%', maxWidth: 720, margin: '0 auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}
-                        className="sm:p-6"
+                        className="pb-28 sm:p-6 sm:pb-28 lg:pb-6"
+                        onFocusCapture={(e) => { if (isTextInput(e.target)) setTyping(true); }}
+                        onBlurCapture={(e) => { if (isTextInput(e.target)) setTyping(false); }}
                     >
 
                         {/* Borrador recuperado */}
                         {restoredNotice && (
                             <div style={{ padding: '13px 16px', background: 'var(--paper-2)', border: 'none', borderRadius: 'var(--r-md)', fontSize: 15, display: 'flex', gap: 10, alignItems: 'flex-start', lineHeight: 1.5 }}>
                                 <RotateCcw style={{ width: 15, height: 15, flexShrink: 0, marginTop: 3, color: 'var(--ink-soft)' }} />
-                                <span style={{ flex: 1 }}>{restoredNotice.hadImages ? t.create.draftRestoredImages : t.create.draftRestored}</span>
-                                <button onClick={() => setRestoredNotice(null)} aria-label="Cerrar" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--ink-soft)', padding: 0, lineHeight: 1 }}>×</button>
+                                <span style={{ flex: 1 }}>
+                                    {restoredNotice.hadImages ? t.create.draftRestoredImages : t.create.draftRestored}{' '}
+                                    <button onClick={discardDraft} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--accent-2-hex)', fontWeight: 600, fontSize: 15 }}>
+                                        {t.create.draftStartOver}
+                                    </button>
+                                </span>
+                                <button onClick={() => setRestoredNotice(null)} aria-label={t.create.close} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--ink-soft)', padding: 0, lineHeight: 1 }}>×</button>
                             </div>
                         )}
 
@@ -1778,19 +2138,48 @@ export default function CreatePageEnhanced() {
                         )}
 
                         {/* ── Lo necesario ── */}
-                        {showStarter && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'var(--accent-soft)', borderRadius: 'var(--r-md)', fontSize: 14, lineHeight: 1.5 }}>
-                                <Sparkles style={{ width: 15, height: 15, flexShrink: 0, color: 'var(--accent-hex)' }} />
-                                <span style={{ flex: 1, color: 'var(--ink-black)' }}>{t.create.starterNotice}</span>
+                        {/* La ocasión decide título, mensaje, botones y estilo de
+                            partida: es la primera decisión, no la carta de
+                            San Valentín para todo. */}
+                        <DField label={t.create.occasionLabel}>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                                {OCCASIONS.map(({ id }) => {
+                                    const active = activeOccasion === id;
+                                    return (
+                                        <button
+                                            key={id}
+                                            type="button"
+                                            aria-pressed={active}
+                                            onClick={() => applyOccasion(id)}
+                                            style={{
+                                                padding: '9px 14px', borderRadius: 'var(--r-pill)', cursor: 'pointer', fontSize: 15, fontWeight: 600,
+                                                border: 'none',
+                                                background: active ? 'var(--accent-hex)' : 'var(--paper-2)',
+                                                color: active ? 'var(--on-accent-default)' : 'var(--ink-black)',
+                                            }}
+                                        >
+                                            {presets[id].label}
+                                        </button>
+                                    );
+                                })}
                                 <button
-                                    onClick={() => { updateForm({ title: '', message: '' }); setShowStarter(false); }}
-                                    style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--accent-2-hex)', fontWeight: 600, fontSize: 14, whiteSpace: 'nowrap' }}
+                                    type="button"
+                                    aria-pressed={isBlank}
+                                    onClick={startBlank}
+                                    style={{
+                                        padding: '9px 14px', borderRadius: 'var(--r-pill)', cursor: 'pointer', fontSize: 15, fontWeight: 600,
+                                        border: '1px dashed var(--lila-2)',
+                                        background: isBlank ? 'var(--accent-soft)' : 'transparent',
+                                        color: 'var(--ink-soft)',
+                                    }}
                                 >
-                                    {t.create.starterClear}
+                                    {t.create.occasionBlank}
                                 </button>
                             </div>
-                        )}
+                        </DField>
+
                         {contentFields()}
+                        {styleStrip()}
 
                         {/* ── Lo opcional ──
                             Plegado por defecto: si esto estuviera abierto, las 82
@@ -1804,45 +2193,85 @@ export default function CreatePageEnhanced() {
                                 <p style={{ fontSize: 14, color: 'var(--ink-faint)', margin: '4px 0 0' }}>{t.create.customizeDesc}</p>
                             </div>
 
-                            {([
-                                ['design', t.create.tabDesign, Palette, themeFields],
-                                ['media', t.create.tabMedia, ImageIcon, mediaFields],
-                                ['effects', t.create.tabEffects, Sparkles, effectsFields],
-                                ['preview', t.create.tabLink, Link2, linkFields],
-                            ] as const).map(([id, label, Icon, render]) => {
-                                const open = openSection === id;
+                            {(() => {
+                                const tabs = [
+                                    ['design', t.create.tabDesign, Palette, themeFields],
+                                    ['media', t.create.tabMedia, ImageIcon, mediaFields],
+                                    ['effects', t.create.tabEffects, Sparkles, effectsFields],
+                                    ['preview', t.create.tabLink, Link2, linkFields],
+                                ] as const;
+                                const current = tabs.find(([id]) => id === openSection) ?? tabs[0];
                                 return (
-                                    <div key={id} style={{ borderRadius: 'var(--r-md)', background: open ? 'var(--paper-2)' : 'transparent', overflow: 'hidden' }}>
-                                        <button
-                                            onClick={() => setOpenSection(open ? null : id)}
-                                            aria-expanded={open}
-                                            style={{
-                                                width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                                                padding: '14px 14px', background: 'transparent', border: 'none',
-                                                cursor: 'pointer', textAlign: 'left', fontSize: 16, fontWeight: 600,
-                                                color: 'var(--ink-black)', fontFamily: 'var(--sans)',
-                                            }}
-                                            className="hover:bg-paper-2 rounded-md transition-colors"
-                                        >
-                                            <span style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--accent-soft)', color: 'var(--accent-2-hex)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                                <Icon style={{ width: 16, height: 16 }} />
-                                            </span>
-                                            <span style={{ flex: 1 }}>{label}</span>
-                                            <ChevronDown style={{ width: 17, height: 17, color: 'var(--ink-faint)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 180ms' }} />
-                                        </button>
-                                        {open && (
-                                            <div style={{ padding: '4px 14px 18px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-                                                {render()}
-                                            </div>
-                                        )}
+                                    <div ref={tabsRef} style={{ scrollMarginTop: 80 }}>
+                                        <div role="tablist" style={{ display: 'flex', gap: 6, overflowX: 'auto', padding: 4, borderRadius: 'var(--r-md)', background: 'var(--paper-2)' }}>
+                                            {tabs.map(([id, label, Icon]) => {
+                                                const active = openSection === id;
+                                                return (
+                                                    <button
+                                                        key={id}
+                                                        role="tab"
+                                                        aria-selected={active}
+                                                        onClick={() => setOpenSection(id)}
+                                                        style={{
+                                                            flex: '1 0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                                                            padding: '9px 12px', border: 'none', borderRadius: 10, cursor: 'pointer',
+                                                            fontSize: 15, fontWeight: 600, fontFamily: 'var(--sans)', whiteSpace: 'nowrap',
+                                                            background: active ? 'var(--paper-soft)' : 'transparent',
+                                                            boxShadow: active ? 'var(--shadow-soft)' : 'none',
+                                                            color: active ? 'var(--accent-2-hex)' : 'var(--ink-soft)',
+                                                        }}
+                                                    >
+                                                        <Icon style={{ width: 15, height: 15 }} />
+                                                        {label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                        <div role="tabpanel" style={{ padding: '18px 2px 4px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+                                            {current[3]()}
+                                        </div>
                                     </div>
                                 );
-                            })}
+                            })()}
                         </div>
                     </div>
                 </aside>
             </div>
         </div>
+
+        {/* ── Móvil: la carta siempre a un toque ──
+            Antes era un icono de ojo sin texto en la cabecera. Se aparta
+            mientras se escribe para no tapar el campo con el teclado abierto. */}
+        {!showPreview && !typing && (
+            <button
+                type="button"
+                onClick={() => setShowPreview(true)}
+                className="flex lg:hidden"
+                style={{
+                    position: 'fixed', left: '50%', bottom: 'calc(18px + env(safe-area-inset-bottom))', transform: 'translateX(-50%)', zIndex: 45,
+                    alignItems: 'center', gap: 10, padding: '8px 20px 8px 8px',
+                    border: 'none', borderRadius: 'var(--r-pill)', cursor: 'pointer',
+                    background: 'var(--ink-black)', color: 'var(--paper)',
+                    boxShadow: '0 12px 28px -10px rgba(27, 23, 33, 0.55)',
+                    fontSize: 16, fontWeight: 700, fontFamily: 'var(--sans)', whiteSpace: 'nowrap',
+                }}
+            >
+                {/* Miniatura de la carta con su paleta */}
+                <span
+                    aria-hidden="true"
+                    style={{
+                        width: 34, height: 34, borderRadius: 999, flexShrink: 0,
+                        background: formData.backgroundColor, border: `3px solid ${formData.accentColor}`,
+                        color: formData.textColor, fontSize: 12, fontWeight: 800,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                >
+                    Aa
+                </span>
+                {t.create.seeMyLetter}
+                <Eye style={{ width: 17, height: 17, opacity: 0.8 }} />
+            </button>
+        )}
 
         {/* ═══════════════════════════════════════════════════════
             VISTA PREVIA A PANTALLA COMPLETA (móvil)
@@ -1877,9 +2306,11 @@ export default function CreatePageEnhanced() {
                 </div>
 
                 <div style={{ flexShrink: 0, padding: '14px 16px 22px', display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center' }}>
-                    <span style={{ fontSize: 14, color: 'var(--ink-faint)' }}>
-                        lovepages.ink/p/<span style={{ color: 'var(--accent-2-hex)', fontWeight: 600 }}>{formData.customSlug || '—'}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--ink-soft)' }}>
+                        <MousePointerClick style={{ width: 14, height: 14 }} />
+                        {t.create.previewEditHint}
                     </span>
+                    {linkPill()}
                     <button onClick={() => setShowPreview(false)} className="btn-ink" style={{ width: '100%', maxWidth: 360, padding: '14px 20px' }}>
                         {t.create.previewBackToEdit}
                     </button>
@@ -1906,6 +2337,62 @@ export default function CreatePageEnhanced() {
         />
 
         <UpgradeModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
+
+        {/* ── Publicada: mandarla es el siguiente paso ── */}
+        {published && (
+            <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={t.create.publishedTitle}>
+                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => router.push(`/p/${published.identifier}`)} />
+                <div className="relative w-full max-w-sm" style={{ background: 'var(--paper-soft)', borderRadius: 'var(--r-xl)', boxShadow: 'var(--shadow-card)', padding: '30px 26px 24px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 44, lineHeight: 1 }}>💌</div>
+                    <h3 className="serif-display" style={{ fontSize: 28, lineHeight: 1.15, margin: '14px 0 8px', color: 'var(--ink-black)' }}>
+                        {t.create.publishedTitle}
+                    </h3>
+                    <p style={{ fontSize: 16, lineHeight: 1.5, color: 'var(--ink-soft)', margin: 0 }}>
+                        {t.create.publishedDesc.replace('{name}', formData.recipientName.trim())}
+                    </p>
+
+                    <div style={{ marginTop: 18, padding: '10px 12px', borderRadius: 'var(--r-md)', background: 'var(--paper-2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink-black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                            {published.url.replace(/^https?:\/\//, '')}
+                        </span>
+                        <button onClick={copyPublished} aria-label={t.create.shareCopy} title={t.create.shareCopy} style={{ flexShrink: 0, width: 34, height: 34, border: 'none', borderRadius: 10, background: 'var(--paper-soft)', color: 'var(--accent-2-hex)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Copy style={{ width: 15, height: 15 }} />
+                        </button>
+                    </div>
+
+                    <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <a
+                            href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px 18px', borderRadius: 'var(--r-md)', background: '#25D366', color: '#fff', fontSize: 16, fontWeight: 700, textDecoration: 'none' }}
+                        >
+                            <MessageCircle style={{ width: 18, height: 18 }} />
+                            {t.create.shareWhatsApp}
+                        </a>
+                        <div style={{ display: 'grid', gridTemplateColumns: canNativeShare ? '1fr 1fr' : '1fr', gap: 10 }}>
+                            {canNativeShare && (
+                                <button onClick={nativeShare} className="btn-ink" style={{ padding: '12px 14px', fontSize: 15, justifyContent: 'center' }}>
+                                    <Share2 style={{ width: 15, height: 15 }} /> {t.create.shareMore}
+                                </button>
+                            )}
+                            <button onClick={copyPublished} className="btn-ink" style={{ padding: '12px 14px', fontSize: 15, justifyContent: 'center' }}>
+                                <Copy style={{ width: 15, height: 15 }} /> {t.create.shareCopy}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: 18, display: 'flex', justifyContent: 'center', gap: 18, fontSize: 15 }}>
+                        <button onClick={() => router.push(`/p/${published.identifier}`)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--accent-2-hex)', fontWeight: 700 }}>
+                            {t.create.shareViewLetter}
+                        </button>
+                        <button onClick={() => router.push('/dashboard')} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--ink-soft)', fontWeight: 600 }}>
+                            {t.create.shareGoPages}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
         </>
     );
 }
